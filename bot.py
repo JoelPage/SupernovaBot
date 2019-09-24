@@ -10,6 +10,10 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.Bot(command_prefix='!')
 
+@bot.event
+async def on_ready():
+    print(f'{bot.user.name} has connected to Discord!')
+
 @bot.command(name='create-channel')
 @commands.has_role('Officer')
 async def create_channel(ctx, channel_name='real-python'):

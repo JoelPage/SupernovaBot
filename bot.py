@@ -5,6 +5,8 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import helpers
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
@@ -16,7 +18,7 @@ async def on_ready():
 
 @bot.command(name='create-channel')
 @commands.has_role('Officer')
-async def create_channel(ctx, channel_name='real-python'):
+async def create_channel(ctx, channel_name='new-channel-' + str(helpers.getTimeInMilliseconds())):
     guild = ctx.guild
     existing_channel = discord.utils.get(guild.channels, name=channel_name)
     if not existing_channel:

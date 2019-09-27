@@ -7,6 +7,14 @@ from dotenv import load_dotenv
 
 import helpers
 
+import threading
+
+def thread_func(bot):
+    run_bot(bot)
+    
+def run_bot(bot):
+    bot.run(TOKEN)
+    
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
@@ -33,4 +41,10 @@ async def create_channel(ctx, channel_name=f"new-channel-{helpers.getTimeInMilli
         print(f'Creating a new channel: {channel_name}')
         await guild.create_text_channel(channel_name)
 
-bot.run(TOKEN)
+x = threading.Thread(target=thread_func, args=(bot,))
+
+x.start()
+
+g = input("Talk to me")
+
+print("finished")

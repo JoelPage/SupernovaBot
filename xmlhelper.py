@@ -9,22 +9,40 @@ def prettify(xmlStr):
     reparsed = minidom.parseString(rough_string)
     return reparsed.toprettyxml(indent=INDENT)
 
-data = ET.Element('data')
-events = ET.SubElement(data, 'events')
-event0 = ET.SubElement(events, 'event')
-event0.set('name', 'event0')
-event0.text = 'event0abc'
-event1 = ET.SubElement(events, 'event')
-event1.set('name', 'event1')
-event1.text = 'event1abc'
+# Write xml string to file
+def fileWrite(data, fileName):
+    prettyData = prettify(data)
+    file = open(fileName, "w")
+    file.write(prettyData)
+    file.close()
+    
+# Read tree from xml file
+def fileRead(fileName):
+    file = open(fileName, "r")
+    tree = ET.parse(file)
+    file.close()
+    return tree
+    
+# Create Dummy Event
+def createDummyEvent(fileName):
+    data = ET.Element('data')
+    events = ET.SubElement(data, 'events')
+    event0 = ET.SubElement(events, 'event')
+    event0.set('name', 'event0')
+    event0.text = 'event0abc'
+    event1 = ET.SubElement(events, 'event')
+    event1.set('name', 'event1')
+    event1.text = 'event1abc'
+    
+    # Write 
+    fileWrite(data, fileName)
 
-prettified_xmlStr = prettify(data)
-wFile = open("events.xml", "w")
-wFile.write(prettified_xmlStr)
-wFile.close()
+fileName = "events.xml"
 
-rFile = open("events.xml", "r")
-tree = ET.parse(rFile)
+createDummyEvent(fileName)
+
+# Print all data in Events.xml
+tree = fileRead(fileName)
 root = tree.getroot()
 
 print('\nAll attributes:')
@@ -32,5 +50,3 @@ for elem in root:
     print(elem.attrib)
     for subelem in elem:
         print(subelem.attrib)
-        
-rFile.close()

@@ -1,20 +1,35 @@
 # bot.py
 import os
-
 import discord
+import helpers
+import asyncio
+
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import helpers
+def run():
+	loop = asyncio.new_event_loop()
+	
+	try:
+		loop.run_until_complete(start())
+	except Exception as e:
+		print(e)
+		pass
+	finally:
+		loop.close()
 
-import threading
+async def start():
+	print("Starting Discord Bot")
+	await bot.start(TOKEN)
+	print("Started Discord Bot")
+	
+async def exit():
+	await logout()
+	
+async def logout():
+	print("Logging out of Discord Bot")
+	await bot.logout()
 
-def thread_func(bot):
-    run_bot(bot)
-    
-def run_bot(bot):
-    bot.run(TOKEN)
-    
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
@@ -40,11 +55,3 @@ async def create_channel(ctx, channel_name=f"new-channel-{helpers.getTimeInMilli
     if not existing_channel:
         print(f'Creating a new channel: {channel_name}')
         await guild.create_text_channel(channel_name)
-
-x = threading.Thread(target=thread_func, args=(bot,))
-
-x.start()
-
-g = input("Talk to me")
-
-print("finished")

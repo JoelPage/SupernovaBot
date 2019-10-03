@@ -1,21 +1,39 @@
 import time
-import xmlhelper
+import xml_helpers
+import threading_helpers
+
+def CreateFunctionThread(func, args=None):
+	#print("Helpers - Creating Function Thread")
+	if args:
+		return threading_helpers.CreateThread(func, args)
+	else:
+		return threading_helpers.CreateThread(func)
+
+def CreateAndRunFunctionThread(func, args=None):
+	if args:
+		thread = CreateFunctionThread(func, args)
+	else:
+		thread = CreateFunctionThread(func)
+		
+	#print("Helpers - Starting Function Thread")
+	thread.start()
+	return thread
+	
+async def CreateFunctionThreadAsync(func, args=None):
+	#print("Helpers - Creating Function Thread")
+	if args:
+		return await threading_helpers.CreateThread(func, args)
+	else:
+		return await threading_helpers.CreateThread(func)
+
+async def CreateAndRunFunctionThreadAsync(func, args=None):
+	if args:
+		thread = await CreateFunctionThreadAsync(func, args)
+	else:
+		thread = await CreateFunctionThreadAsync(func)
+		
+	#print("Helpers - Starting Function Thread")
+	await thread.start()
+	return thread
 
 getTimeInMilliseconds = lambda: int(round(time.time() * 1000))
-
-# Event Structure
-# UID 
-# Name 
-# Description - Optional 
-# Start Date Time - Optional 
-# End Date Time  - Optional 
-class Event(object):
-    
-    def __init__(self, name):
-        self.uid = format(int(time.time()), 'X')
-        self.name = name
-      
-evnt = Event("test")
-print("Test Event :")
-print(evnt.uid)
-print(evnt.name)

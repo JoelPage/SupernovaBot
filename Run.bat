@@ -1,2 +1,2 @@
-python bot.py 
+python main.py 
 cmd /k

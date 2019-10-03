@@ -37,16 +37,17 @@ def createDummyEvent(fileName):
     # Write 
     fileWrite(data, fileName)
 
-fileName = "events.xml"
-
-createDummyEvent(fileName)
-
+#fileName = "events.xml"
+#
+#createDummyEvent(fileName)
+#
 # Print all data in Events.xml
-tree = fileRead(fileName)
-root = tree.getroot()
-
-print('\nAll attributes:')
-for elem in root:
-    print(elem.attrib)
-    for subelem in elem:
-        print(subelem.attrib)
+#tree = fileRead(fileName)
+#root = tree.getroot()
+#
+#print('\nAll attributes:')
+#for elem in root:
+#    print(elem.attrib)
+#    for subelem in elem:
+#        print(subelem.attrib)
+#

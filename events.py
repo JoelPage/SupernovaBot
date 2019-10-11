@@ -3,14 +3,7 @@ import helpers
 
 import xml.etree.ElementTree as ET
 
-def InitialiseEventsSystem():
-    print("InitialiseEventsSystem")
-
-    CreateDummyEvent()
-
-    eventsTree = helpers.xml_helpers.fileRead("events.xml")
-    CreateEventsArrayFromTree(eventsTree.getroot())
-
+# Testing
 def CreateDummyEvent():
     print("CreateDummyEvent")
     eventsArray.clear()
@@ -19,6 +12,15 @@ def CreateDummyEvent():
     dummyEventsTree = CreateTreeFromEventsArray(eventsArray)
     helpers.xml_helpers.fileWrite(dummyEventsTree, "events.xml")
     eventsArray.clear()
+
+# Core Functions
+def InitialiseEventsSystem():
+    print("InitialiseEventsSystem")
+
+    CreateDummyEvent()
+
+    eventsTree = helpers.xml_helpers.fileRead("events.xml")
+    CreateEventsArrayFromTree(eventsTree.getroot())
 
 def CreateEventsArrayFromTree(treeRoot):
     print("CreateEventsArrayFromTree")
@@ -40,7 +42,7 @@ def CreateTreeFromEventsArray(_array):
 def CreateEventTree():
     print("CreateEventTree")
     root = ET.Element('root')
-    events = ET.SubElement(root, 'events')
+    ET.SubElement(root, 'events')
     return root
 
 def CreateNewEvent(_name):
@@ -60,6 +62,11 @@ def AddEventToTree(treeRoot, event):
     eventUID = ET.SubElement(newEvent, 'uid')
     eventUID.text = event.uid
 
+def WriteEventsToFile():
+    helpers.xml_helpers.fileWrite(eventsTree, "events.xml")
+
+def ReadEventsFromFile():
+    helpers.xml_helpers.fileRead("events.xml")
 
 # Initialise - Create File if no Exists
 #              If file does exist load into memory
@@ -92,6 +99,7 @@ class Event(object):
     
     def __init__(self, _uid=None, _name=None, _start=None, _end=None):
         print(f"Event({_uid}, {_name}, {_start}, {_end})")
+
         if _uid == None:
             self.uid = uid.get()
         else:
@@ -112,9 +120,9 @@ class Event(object):
 
 # Core
 eventsArray = []
+eventsTree = None
 
 InitialiseEventsSystem()
 
 eventsTree = CreateTreeFromEventsArray(eventsArray)
 
-helpers.xml_helpers.fileWrite(eventsTree, "events.xml")

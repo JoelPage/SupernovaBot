@@ -28,11 +28,11 @@ def createDummyEvent(fileName):
     data = ET.Element('data')
     events = ET.SubElement(data, 'events')
     event0 = ET.SubElement(events, 'event')
-    event0.set('name', 'event0')
-    event0.text = 'event0abc'
+    event0Name = ET.SubElement(event0, 'name')
+    event0Name.text = 'event0abc'
     event1 = ET.SubElement(events, 'event')
-    event1.set('name', 'event1')
-    event1.text = 'event1abc'
+    event1Name = ET.SubElement(event1, 'name')
+    event1Name.text = 'event1abc'
     
     # Write 
     fileWrite(data, fileName)

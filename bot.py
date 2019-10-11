@@ -8,15 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 def run():
-	loop = asyncio.new_event_loop()
-	
-	try:
-		loop.run_until_complete(start())
-	except Exception as e:
-		print(e)
-		pass
-	finally:
-		loop.close()
+	bot.run(TOKEN)
 
 async def start():
 	print("Starting Discord Bot")
@@ -46,6 +38,12 @@ async def on_member_join(member):
         f"""Hi {member.name}, welcome to Supernova's discord server! 
 Please set your nickname to be your in-game character name and leave us a message in #new-arrivals and we will get back to you!"""
     )
+
+@bot.command(name='create-event')
+@commands.has_role('Officer')
+async def create_event(ctx, event_name=f"new-event-{helpers.getTimeInMilliseconds()}"):
+	print(f"Creating event at {event_name}.xml")
+	helpers.CreateDummyEvent(f"{event_name}.xml")
 
 @bot.command(name='create-channel')
 @commands.has_role('Officer')

@@ -13,18 +13,7 @@ import threading
 
 def main():
 	print("main()")
-
-	# Bot Thread
-	initBotThread()	
-	
-	# Read Input
-	readInput()
-	
-	# Start
-	onStart()
-	
-	# Update
-	onUpdate()
+	#initBotThread()
 			
 def onStart():
 	print("onStart")
@@ -34,7 +23,7 @@ def onUpdate():
 
 def initBotThread():
 	print("initBotThread()")
-	botThread = helpers.CreateAndRunFunctionThread(bot.run())
+	bot.run()
 
 async def runBotAsync(runLoop):
 	print("Creating Run Bot Async Task")

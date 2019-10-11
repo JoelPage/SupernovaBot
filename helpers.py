@@ -37,3 +37,7 @@ async def CreateAndRunFunctionThreadAsync(func, args=None):
 	return thread
 
 getTimeInMilliseconds = lambda: int(round(time.time() * 1000))
+
+
+def CreateDummyEvent(fileName):
+	xml_helpers.createDummyEvent(fileName) 	

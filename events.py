@@ -277,7 +277,8 @@ while g_exit == False:
     print("Waiting for command...")
     input = i_input.gatherInput()
     # Split input by space
-    args = input.split(" ")
+    # String spliting will break in quotes
+    args = input.split("")
     processArguments(args)
 
     continue

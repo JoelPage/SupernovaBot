@@ -12,11 +12,12 @@ class Event():
             self.uid = uid
 
         self.name = name
-        self.start = start
 
         if startDate != None:
             gmStartDate = i_time.gmtime(startDate.timestamp())
             self.start = start.replace(year=gmStartDate.tm_year, month=gmStartDate.tm_mon, day=gmStartDate.tm_mday)    
+        else:
+            self.start = start
 
         if end != None and endDate == None: 
             gmStart = i_time.gmtime(self.start.timestamp())
@@ -27,5 +28,3 @@ class Event():
         elif end != None and endDate != None:
             gmEnd = i_time.gmtime(end.timestamp())
             self.end = endDate.replace(hour=gmEnd.tm_hour, minute=gmEnd.tm_min)
-
-        self.endDate = endDate

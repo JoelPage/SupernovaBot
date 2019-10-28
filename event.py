@@ -19,15 +19,13 @@ class Event():
             self.start = start.replace(year=gmStartDate.tm_year, month=gmStartDate.tm_mon, day=gmStartDate.tm_mday)    
 
         if end != None and endDate == None: 
-            gmNow = i_time.gmtime(i_datetime.datetime.now())
-            self.end = end.replace(year=gmNow.tm_year, month=gmNow.tm_mon, day=gmNow.tm_mday)
+            gmStart = i_time.gmtime(self.start.timestamp())
+            self.end = end.replace(year=gmStart.tm_year, month=gmStart.tm_mon, day=gmStart.tm_mday)
         elif end == None and endDate != None:
-            gmNow = i_time.gmtime(i_datetime.datetime.now())
-            self.end = end.replace(hour=gmNow.tm_hour, minute=gmNow.tm_min)
+            gmStart = i_time.gmtime(self.start.timestamp())
+            self.end = end.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
         elif end != None and endDate != None:
-            gmEndDate = i_time.gmtime(endDate.timestamp())
-            self.end = end.replace(year=gmEndDate.tm_year, month=gmEndDate.tm_mon, day=gmEndDate.tm_mday)
-
-        print(end)
+            gmEnd = i_time.gmtime(end.timestamp())
+            self.end = endDate.replace(hour=gmEnd.tm_hour, minute=gmEnd.tm_min)
 
         self.endDate = endDate

@@ -1,0 +1,2 @@
+eventsArray = []
+exit = False

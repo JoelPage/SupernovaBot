@@ -1,3 +1,8 @@
+import command_manager as i_command_manager
+import event_commands as i_event_commands
+import event_globals as i_event_globals
+import event as i_event
+
 import unique_identifier as i_uid
 import helpers as i_util
 import xml.etree.ElementTree as i_tree
@@ -6,45 +11,36 @@ import input as i_input
 import time as i_time
 import datetime as i_datetime
 
-# Parse Time
-
-g_eventsArray = []
-g_eventsTree = None
-g_exit = False
+import shlex as i_shlex
 
 # Testing
 def createDummyEvent():
-    print("createDummyEvent")
-    g_eventsArray.clear()
+    #print("createDummyEvent")
+    i_event_globals.eventsArray.clear()
     firstEvent = createNewEvent("First Event", i_time.time())
-    g_eventsArray.append(firstEvent)
-    dummyEventsTree = createTreeFromEventsArray(g_eventsArray)
+    i_event_globals.eventsArray.append(firstEvent)
+    dummyEventsTree = createTreeFromEventsArray(i_event_globals.eventsArray)
     i_util.xml_helpers.fileWrite(dummyEventsTree, "events.xml")
-    g_eventsArray.clear()
+    i_event_globals.eventsArray.clear()
 
 # Core Functions
 def initialiseEventsSystem():
-    print("initialiseEventsSystem")
-
-    # Create Dummy Event To Populate events.xml
-    #createDummyEvent()
-    global g_eventsTree
-    g_eventsTree = i_util.xml_helpers.fileRead("events.xml")
-
-    createEventsArrayFromTree(g_eventsTree.getroot())
+    #print("initialiseEventsSystem")
+    eventsTree = i_util.xml_helpers.fileRead("events.xml")
+    createEventsArrayFromTree(eventsTree.getroot())
 
 def createEventsArrayFromTree(treeRoot):
-    print("createEventsArrayFromTree")
-    g_eventsArray.clear()
+    #print("createEventsArrayFromTree")
+    i_event_globals.eventsArray.clear()
     for events in treeRoot.findall("events"):
         for event in events.findall("event"):
             eventName = event.find("name").text
             uid = event.find("uid").text
-            start = f"{int(i_time.time())}" #event.find("start").text
-            g_eventsArray.append(createEvent(uid, eventName, start))
+            start = int(i_time.time()) #int(event.find("start_time").text) # Ghetto Parse
+            i_event_globals.eventsArray.append(createEvent(uid, eventName, start))
 
 def createTreeFromEventsArray(array):
-    print(f"createTreeFromEventsArray({array} Count:{len(array)}")
+    #print(f"createTreeFromEventsArray({array} Count:{len(array)}")
     root = createEventTree()
     for event in array:
         addEventToTree(root, event)
@@ -52,21 +48,21 @@ def createTreeFromEventsArray(array):
     return root
 
 def createEventTree():
-    print("createEventTree")
+    #print("createEventTree")
     root = i_tree.Element('root')
     i_tree.SubElement(root, 'events')
     return root
 
 def createNewEvent(name, start):
     #print(f"createNewEvent({name})")
-    return Event(None, name, start)
+    return i_event.Event(name, start)
 
 def createEvent(uid, name, start):
     #print(f"createNewEvent({uid}, {name})")
-    return Event(uid, name, start)
+    return i_event.Event(name, start, uid=uid)
 
 def addEventToTree(treeRoot, event):
-    print("addEventToTree")
+    #print("addEventToTree")
     events = treeRoot.find('events')
     newEvent = i_tree.SubElement(events, 'event')
     eventName = i_tree.SubElement(newEvent, 'name')
@@ -77,35 +73,19 @@ def addEventToTree(treeRoot, event):
     eventStartTime.text = f"{event.start}"
 
 def writeEventsToFile(root):
-    print("writeEventsToFile")
+    #print("writeEventsToFile")
     i_util.xml_helpers.fileWrite(root, "events.xml")
 
 def readEventsFromFile():
-    print("readEventsFromFile")
+    #print("readEventsFromFile")
     i_util.xml_helpers.fileRead("events.xml")
 
 def findEventByUID(uid):
-    for event in g_eventsArray:
+    for event in i_event_globals.eventsArray:
         if event.uid == uid:
             return event
 
     return None
-
-# Event Object
-class Event(object):
-
-    def __init__(self, uid, name, start, end=None):
-        print(f"Event({uid}, {name}, {start}, {end})")
-        # Required
-        if uid == None:
-            self.uid = i_uid.get()
-        else:
-            self.uid = uid
-
-        self.name = name
-        self.start = start
-        # Optional
-        self.end = end
 
 def isEnoughArgs(args, count):
     return len(args) >= count
@@ -272,15 +252,12 @@ def commandCreateOptionalArgs(event, args):
 # Core
 initialiseEventsSystem()
 
-while g_exit == False:
-    # Gather Input
+while i_event_globals.exit == False:
     print("Waiting for command...")
     input = i_input.gatherInput()
-    # Split input by space
-    # String spliting will break in quotes
-    args = input.split("")
-    processArguments(args)
-
+    args = i_shlex.split(input)
+    commandName = args[0]
+    i_command_manager.executeCommand(commandName, args[1:])
     continue
 
     # Edit
@@ -297,3 +274,4 @@ while g_exit == False:
 # Times for all events to allow sorting.
 # Skip (Remove next upcoming event)
 # More event values, Thumbnail, Image, Description, Members
+

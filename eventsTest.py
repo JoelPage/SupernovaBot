@@ -34,8 +34,8 @@ def handleArgDesc(event, mask, args):
 def commandArgData(arg):
     argU = arg.upper()
     switch = {
-    "DATE" : argumentData(1 << 0, handleArgDate, parseDate),               # Set Start and End Date
-    "TODAY" : argumentData(1 << 1, handleArgToday, parseDate),             # Set Start and End Date as Today's Date
+    "DATE" : argumentData(1 << 0, handleArgDate),               # Set Start and End Date
+    "TODAY" : argumentData(1 << 1, handleArgToday),             # Set Start and End Date as Today's Date
     "START-DATE" : argumentData(1 << 2, handleArgStartDate),    # Set Start Date
     "END-DATE" : argumentData(1 << 3, handleArgEndDate),        # Set End Date
     "REPEAT" : argumentData(1 << 4, handleArgRepeat),           # Set the Days of the week this event will Repeat

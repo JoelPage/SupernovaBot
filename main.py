@@ -1,16 +1,16 @@
-import input as i_input
 import shlex as i_shlex
 import event_globals as i_event_globals # Should use generic globals for exit
-import event_commands as i_event_commands # Why does this need to be here?
-import command_manager as i_command_manager
+
+import commands as i_commands # CommandManager.executeCommand
+import event_commands as i_event_commands # Init event commands
 
 def main():
-	print("main()")
+	#print("main()")
 	while i_event_globals.exit == False:
 	    print("Waiting for command...")
 	    args = i_shlex.split(input())
 	    commandName = args[0]
-	    i_command_manager.executeCommand(commandName, args[1:])
+	    i_commands.CommandManager.executeCommand(commandName, args[1:])
 
 main()
 

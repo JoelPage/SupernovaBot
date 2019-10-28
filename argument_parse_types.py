@@ -30,8 +30,7 @@ def parse_time(string):
         if args.minutes < 0 or args.minutes > 60: raise ValueError
 
         nowDateTime = i_datetime.datetime.now()
-        eventStartTime = nowDateTime.replace(hour=args.hours, minute=args.minutes, second=0, microsecond=0)
-        return eventStartTime.timestamp()
+        return nowDateTime.replace(hour=args.hours, minute=args.minutes, second=0, microsecond=0)
 
     except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse {string} as time")
         
@@ -51,23 +50,16 @@ def parse_date(string):
         if hasYear : parser.add_argument("year", type=int)
         args = parser.parse_args(splitString)
 
-        print(args)
-
         if args.month < 0 or args.month > 12 : return ValueError
         if args.day < 0 or args.day > 31 : return ValueError
 
-        print("PArsed motnh and day")
-
         year = 1970
         if hasYear == False:
-            print("has year == false")
             now = i_datetime.datetime.now()
             gmtime = i_time.gmtime(now.timestamp())
             year = gmtime.tm_year
         else:
             if args.year < 1970 : return ValueError
-
-        print(year)
 
         return i_datetime.datetime(year, args.month, args.day)
 

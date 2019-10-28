@@ -14,6 +14,22 @@ def initialise():
     eventsTree = i_util.xml_helpers.fileRead("events.xml")
     createEventsArrayFromTree(eventsTree.getroot())
 
+def publish():
+    treeRoot = createTreeFromEventsArray(i_event_globals.eventsArray)
+    writeEventsToFile(treeRoot)
+
+def createTreeFromEventsArray(array):
+    #print(f"createTreeFromEventsArray({array} Count:{len(array)}")
+    root = createEventTree()
+    for event in array:
+        addEventToTree(root, event)
+
+    return root
+
+def writeEventsToFile(root):
+    #print("writeEventsToFile")
+    i_util.xml_helpers.fileWrite(root, "events.xml")
+
 def createEventsArrayFromTree(treeRoot):
     #print("createEventsArrayFromTree")
     i_event_globals.eventsArray.clear()
@@ -23,14 +39,6 @@ def createEventsArrayFromTree(treeRoot):
             uid = event.find("uid").text
             start = int(i_time.time()) #int(event.find("start_time").text) # Ghetto Parse
             i_event_globals.eventsArray.append(createEvent(uid, eventName, start))
-
-def createTreeFromEventsArray(array):
-    #print(f"createTreeFromEventsArray({array} Count:{len(array)}")
-    root = createEventTree()
-    for event in array:
-        addEventToTree(root, event)
-
-    return root
 
 def createEventTree():
     #print("createEventTree")
@@ -58,9 +66,7 @@ def addEventToTree(treeRoot, event):
     eventStartTime = i_tree.SubElement(newEvent, 'start_time')
     eventStartTime.text = f"{event.start}"
 
-def writeEventsToFile(root):
-    #print("writeEventsToFile")
-    i_util.xml_helpers.fileWrite(root, "events.xml")
+
 
 def readEventsFromFile():
     #print("readEventsFromFile")

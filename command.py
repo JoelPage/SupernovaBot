@@ -35,7 +35,3 @@ class Argument():
         self.type = type
         self.help = help
         self.nargs = nargs
-
-
-    
-

@@ -50,8 +50,8 @@ def parse_date(string):
         if hasYear : parser.add_argument("year", type=int)
         args = parser.parse_args(splitString)
 
-        if args.month < 0 or args.month > 12 : return ValueError
-        if args.day < 0 or args.day > 31 : return ValueError
+        if args.month < 0 or args.month > 12 : raise ValueError
+        if args.day < 0 or args.day > 31 : raise ValueError
 
         year = 1970
         if hasYear == False:
@@ -59,7 +59,7 @@ def parse_date(string):
             gmtime = i_time.gmtime(now.timestamp())
             year = gmtime.tm_year
         else:
-            if args.year < 1970 : return ValueError
+            if args.year < 1970 : raise ValueError
 
         return i_datetime.datetime(year, args.month, args.day)
 
@@ -70,3 +70,11 @@ def parse_day(string):
         # Parse Day/Month
         pass
     except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse day")
+
+def parse_uid(string):
+    try:
+        if len(format(int(i_time.time()), 'X')) == len(string):
+            return string
+        else:
+            raise ValueError
+    except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse UID")

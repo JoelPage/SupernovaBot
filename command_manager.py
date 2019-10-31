@@ -16,7 +16,7 @@ def findCommand(commandName):
 
 def executeCommand(commandName, args):
     try:
-        findCommand(commandName).execute(args)
+        return findCommand(commandName).execute(args)
     except i_argparse.ArgumentError as e: 
         print(e)
     except i_argparse.ArgumentTypeError as e:

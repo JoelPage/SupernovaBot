@@ -6,6 +6,7 @@ import event as i_event
 import helpers as i_util
 
 import time as i_time
+import datetime as i_datetime
 
 import xml.etree.ElementTree as i_tree
 
@@ -15,6 +16,7 @@ def initialise():
     createEventsArrayFromTree(eventsTree.getroot())
 
 def publish():
+    sortEvents()
     treeRoot = createTreeFromEventsArray(i_event_globals.eventsArray)
     writeEventsToFile(treeRoot)
 
@@ -30,16 +32,6 @@ def writeEventsToFile(root):
     #print("writeEventsToFile")
     i_util.xml_helpers.fileWrite(root, "events.xml")
 
-def createEventsArrayFromTree(treeRoot):
-    #print("createEventsArrayFromTree")
-    i_event_globals.eventsArray.clear()
-    for events in treeRoot.findall("events"):
-        for event in events.findall("event"):
-            eventName = event.find("name").text
-            uid = event.find("uid").text
-            start = int(i_time.time()) #int(event.find("start_time").text) # Ghetto Parse
-            i_event_globals.eventsArray.append(createEvent(uid, eventName, start))
-
 def createEventTree():
     #print("createEventTree")
     root = i_tree.Element('root')
@@ -53,8 +45,27 @@ def createNewEvent(name, start):
 def createEvent(uid, name, start):
     #print(f"createNewEvent({uid}, {name})")
     return i_event.Event(name, start, uid=uid)
-
     
+def findEventByUID(uid):
+    for event in i_event_globals.eventsArray:
+        if event.uid == uid:
+            return event
+
+    return None
+
+def removeEvent(uid):
+    resultStr = "Something went wrong."
+    foundEvent = findEventByUID(uid)
+    if foundEvent == None:
+        resultStr = "No event found with UID:{uid}"
+    else:
+        i_event_globals.eventsArray.remove(foundEvent)
+        publish()
+        resultStr = f"Event named:{foundEvent.name} with UID:{uid} removed!"
+
+    print(resultStr)
+    return resultStr
+
 def addEventToTree(treeRoot, event):
     #print("addEventToTree")
     events = treeRoot.find('events')
@@ -63,10 +74,33 @@ def addEventToTree(treeRoot, event):
     eventName.text = event.name
     eventUID = i_tree.SubElement(newEvent, 'uid')
     eventUID.text = event.uid
-    eventStartTime = i_tree.SubElement(newEvent, 'start_time')
-    eventStartTime.text = f"{event.start}"
+    eventStart = i_tree.SubElement(newEvent, 'start')
+    eventStart.text = f"{int(event.start.timestamp())}"
+    if event.end != None:
+        eventEnd = i_tree.SubElement(newEvent, "end")
+        eventEnd.text = f"{int(event.end.timestamp())}"
 
+def createEventsArrayFromTree(treeRoot):
+    #print("createEventsArrayFromTree")
+    i_event_globals.eventsArray.clear()
+    for events in treeRoot.findall("events"):
+        for event in events.findall("event"):
+            eventName = event.find("name").text
+            uid = event.find("uid").text
+            start = i_datetime.datetime.fromtimestamp(int(event.find("start").text))
+            end = None
+            endNode = event.find("end")
+            if endNode != None:
+                end = i_datetime.datetime.fromtimestamp(int(endNode.text))
+            i_event_globals.eventsArray.append(i_event.Event(eventName, start, uid=uid, end=end))
+    
+    sortEvents()
 
+def sortEvents():
+    i_event_globals.eventsArray.sort(key=eventSortFunc)
+
+def eventSortFunc(event):
+    return event.start.timestamp()
 
 def readEventsFromFile():
     #print("readEventsFromFile")

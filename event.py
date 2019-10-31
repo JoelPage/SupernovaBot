@@ -28,3 +28,5 @@ class Event():
         elif end != None and endDate != None:
             gmEnd = i_time.gmtime(end.timestamp())
             self.end = endDate.replace(hour=gmEnd.tm_hour, minute=gmEnd.tm_min)
+        else:
+            self.end = None

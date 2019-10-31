@@ -4,8 +4,12 @@ import event_globals as i_event_globals # Should use generic globals for exit
 import commands as i_commands # CommandManager.executeCommand
 import event_commands as i_event_commands # Init event commands
 
+import bot as i_bot
+
 def main():
 	#print("main()")
+	i_bot.run()
+
 	while i_event_globals.exit == False:
 	    print("Waiting for command...")
 	    args = i_shlex.split(input())
@@ -22,7 +26,6 @@ main()
 # local libraries
 #import helpers
 #import events
-#import bot
 #import input
 
 #import threading

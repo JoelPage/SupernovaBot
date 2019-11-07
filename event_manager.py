@@ -61,9 +61,9 @@ def removeEvent(uid):
     else:
         i_event_globals.eventsArray.remove(foundEvent)
         publish()
-        resultStr = f"Event named:{foundEvent.name} with UID:{uid} removed!"
+        resultStr = f"Event {uid} {foundEvent.name} removed!"
 
-    print(resultStr)
+    #print(resultStr)
     return resultStr
 
 def addEventToTree(treeRoot, event):
@@ -79,6 +79,8 @@ def addEventToTree(treeRoot, event):
     if event.end != None:
         eventEnd = i_tree.SubElement(newEvent, "end")
         eventEnd.text = f"{int(event.end.timestamp())}"
+    eventStarted = i_tree.SubElement(newEvent, 'started')
+    eventStarted.text = "True" if event.started else "False"
 
 def createEventsArrayFromTree(treeRoot):
     #print("createEventsArrayFromTree")
@@ -92,7 +94,11 @@ def createEventsArrayFromTree(treeRoot):
             endNode = event.find("end")
             if endNode != None:
                 end = i_datetime.datetime.fromtimestamp(int(endNode.text))
-            i_event_globals.eventsArray.append(i_event.Event(eventName, start, uid=uid, end=end))
+            started = False
+            startedNode = event.find("started")
+            if startedNode != None:
+                started = True if startedNode.text == "True" else False
+            i_event_globals.eventsArray.append(i_event.Event(eventName, start, uid=uid, end=end, started=started))
     
     sortEvents()
 
@@ -105,5 +111,52 @@ def eventSortFunc(event):
 def readEventsFromFile():
     #print("readEventsFromFile")
     i_util.xml_helpers.fileRead("events.xml")
+
+def check_events():
+    #print("check_events()")
+    # There are probably multiple things that need to happen here.
+    # Check that events are still active.
+    # Check reminders/announcements for events.
+    # Possibly check for reactions to events.
+    # Depending on the results of each check something different may need to be done
+    # in discord by the bot.
+    results = []
+    # End Check
+    endCheckResults = check_events_end()
+    results.append(endCheckResults)
+    # Start Check
+    startCheckResults = check_events_start()
+    results.append(startCheckResults)
+
+    return results
+
+def check_events_end():
+    removeResults = ["Events Removed as their endtime has passed."]
+    now = i_datetime.datetime.now()
+    for event in i_event_globals.eventsArray:
+        if event.end != None and event.end < now:
+            print(f"Event {event.uid} {event.name} removed!")
+            i_event_globals.eventsArray.remove(event)
+            removeResults.append(f":id: {event.uid} {event.name}")
+
+    if len(removeResults) > 1:
+        publish()
+        return removeResults
+    else:
+        return None
+
+def check_events_start():
+    startResults = ["Events that started since the last check."]
+    now = i_datetime.datetime.now()
+    for event in i_event_globals.eventsArray:
+        if event.started == False and event.start < now:
+            startResults.append(f":id: {event.uid} {event.name}")
+            event.started = True
+
+    if len(startResults) > 1:
+        publish()
+        return startResults
+    else:
+        return None
 
 initialise()

@@ -2,10 +2,12 @@ import event as i_event
 import event_commands as i_event_commands
 import event_globals as i_event_globals
 import event_manager as i_event_manager
+import event_time_helpers as i_event_time_helpers
 
 EventManager = i_event_manager
 Event = i_event.Event
 Events = i_event_globals.eventsArray
+time = i_event_time_helpers
 
 #import command_manager as i_command_manager
 #import event_commands as i_event_commands

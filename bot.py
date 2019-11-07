@@ -17,14 +17,60 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 bot = commands.Bot(command_prefix='!')
 
+async def sendDebugMessage(message):
+    debugChannelID = 640834927981494276
+    channel = bot.get_channel(debugChannelID)
+    await channel.send(message)
+
+async def postAnnouncementMessage(message):
+    announcementChannelID = 641202921324937218
+    channel = bot.get_channel(announcementChannelID)
+    await channel.send(message)
+
 def run():
     #print("run()")
     print("Connecting bot to discord...")
     bot.run(TOKEN)
 
+async def update():
+    interval = 30
+    print("Waiting for bot to be ready...")
+    await sendDebugMessage(f"Systems Online! {i_time.time()}\nUpdate ticking every {interval} seconds.")
+    await bot.wait_until_ready()
+    print(f"Bot now checking events every {interval} seconds")
+    while True:
+        await check_events()
+        await asyncio.sleep(interval)
+
+async def check_events():
+    print(f"Checking Events : {i_time.time()}")
+    results = i_events.EventManager.check_events()
+
+    # We need to do different things with each result
+    # Detect End do nothing
+    # Detect Start post to Announcements
+    # Detect Reminder post to Announcements
+    # Reminder structure
+    #   - Time
+    #   - Message
+    #   - hasBeenPosted
+
+    # Ending
+    if results[0] != None and len(results[0]) > 1:
+        await sendDebugMessage(results[0])
+
+    # Starting
+    if results[1] != None and len(results[1]) > 1:
+        for result in results[1][1:]:
+            announcementStr = f"@everyone Event {result} begins!"
+            await postAnnouncementMessage(announcementStr)
+        
+        
+
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
+    bot.loop.create_task(update())
 
 @bot.event
 async def on_member_join(member):
@@ -37,51 +83,51 @@ Please set your nickname to be your in-game character name and leave us a messag
 @bot.command()
 @commands.has_role('Officer')
 async def create(ctx, *args):
-    print(f"Recieved command 'CREATE' with args {args}")
+    print(f"Recieved Discord Command create({args})")
     result = i_commands.CommandManager.executeCommand("CREATE", args)
-    print(result)
-    createResultStr = f"New event created :id: {result.uid} on #<Chat Channel>\n```css\nTitle: '{result.name}'\nStart: {result.start}\nEnd: {result.end}\nRepeat: <Repeat>\nDescription: <Description>```"
-    await ctx.send(createResultStr)
+
+    if result.error != None:
+        await ctx.send(f"```{result.error}```")
+    else:
+        await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
 
 @bot.command()
 @commands.has_role('Officer')
 async def skip(ctx, *args):
-    print(f"Recieved command 'SKIP' with args {args}")
+    print(f"Recieved Discord Command - skip({args})")
     result = i_commands.CommandManager.executeCommand("SKIP", args)
-    await ctx.send(result)
+    
+    if result.error != None:
+        await ctx.send(result.error)
+    else:
+        await ctx.send(result.value)
 
 @bot.command()
 @commands.has_role('Officer')
-async def events(ctx):
-    eventsStr = ""
-    now = i_datetime.datetime.now()
-    for event in i_events.Events:
-        timeDelta = event.start - now
-        timeStr = getTimeUntilStringFromTimeDelta(timeDelta)
-        eventsStr = f"{eventsStr}:id:`{event.uid}` ~ **{event.name}** {timeStr}\n" 
-
-    embed = discord.Embed(title="Upcoming Events", description=eventsStr)
-    embed.set_footer(text=f"{len(i_events.Events)} event(s)")
+async def events(ctx, *args):
+    print(f"Recieved Discord Command - events({args})")
+    result = i_commands.CommandManager.executeCommand("EVENTS", args)
     
-    await ctx.send(embed=embed)
+    if result.error != None:
+        await ctx.send(result.error)
+    else:
+        embed = discord.Embed(title="Upcoming Events", description=result.value[1])
+        embed.set_footer(text=result.value[0])
+        await ctx.send(embed=embed)
 
-def getTimeUntilStringFromTimeDelta(td):
-        tdDays = td.days
-        tdHours = td.seconds//3600
-        tdMinutes = (td.seconds//60)%60
-        timeStr = "begins in "
+@bot.command()
+@commands.has_role('Officer')
+async def edit(ctx, *args):
+    print(f"Recieved Discord Command - edit({args})")
+    result = i_commands.CommandManager.executeCommand("EDIT", args)
+    
+    if result.error != None:
+        await ctx.send(f"```{result.error}```")
+    else:
+        await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
 
-        if tdDays > 0 : 
-            timeStr = f"{timeStr}{tdDays} day(s) "
 
-        if tdHours > 0 :
-             timeStr = f"{timeStr}{tdHours} hour(s) "
-
-        if tdMinutes > 0 :
-             timeStr = f"{timeStr}{tdMinutes} minute(s) "
-
-        return timeStr
-
+# Helper function
 #@bot.command(name='create-channel')
 #@commands.has_role('Officer')
 #async def create_channel(ctx, channel_name=f"new-channel-{helpers.getTimeInMilliseconds()}"):

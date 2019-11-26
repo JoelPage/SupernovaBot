@@ -5,7 +5,7 @@ import re as i_re
 # https://stackoverflow.com/questions/24813872/creating-xml-documents-with-whitespace-with-xml-etree-celementtree
 # Return a pretty-printed XML string for the Element.
 # Tried this function before but it produced strange results so I just wrote my own.
-def prettify(tree):
+def prettify_custom(tree):
     # Read out tree as bytes
     encoding = 'utf-8'
     treeAsBytes = ET.tostring(tree, encoding)
@@ -17,6 +17,7 @@ def prettify(tree):
     # find all words enclosed by triangle braces
     # WARNING : This is a bit janky, if someone has a name that includes triangle braces
     # then this logic could break entirely.
+    # It also fails when trying to add attributes
     split = i_re.findall(r"<(.*?)\>", treeAsString)
 
     # Variables used for producing correct indentation.
@@ -59,9 +60,25 @@ def prettify(tree):
 
     return treeAsString
 
+def prettify_minidom(tree):
+    # Read out tree as bytes
+    encoding = 'utf-8'
+    treeAsBytes = ET.tostring(tree, encoding)
+    # Convert to string
+    treeAsString = str(treeAsBytes, encoding)
+    # Remove new lines
+    splitTree = treeAsString.split("\n")
+    # WARNING : removing \n could break strings that contain this.
+    # maybe be more appropriate to use regex or something similar.
+    treeAsString = "".join(splitTree)
+
+    INDENT = "    "
+    reparsed = minidom.parseString(treeAsString)
+    return reparsed.toprettyxml(indent=INDENT)
+
 # Write xml string to file
 def fileWrite(data, fileName):
-    prettyData = prettify(data)
+    prettyData = prettify_minidom(data)
     file = open(fileName, "w")
     file.write(prettyData)
     file.close()

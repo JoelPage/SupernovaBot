@@ -1,6 +1,11 @@
+# Python Includes
 import argparse as i_argparse
 import time as i_time
 import datetime as i_datetime
+# Supernova Events
+import snEvents.helpers as snHelpers
+# Aliases
+helpers = snHelpers
 
 def parse_time(string):
     print("parse_time()")
@@ -35,9 +40,8 @@ def parse_time(string):
     if args.minutes < 0 or args.minutes > 60:
         raise ValueError("Minutes provided was greater than 60")
 
-    nowDateTime = i_datetime.datetime.now()
-    print("succesfully parsed time")
-    return nowDateTime.replace(hour=args.hours, minute=args.minutes, second=0, microsecond=0)
+    now = helpers.getNowWithOffset()
+    return now.replace(hour=args.hours, minute=args.minutes, second=0, microsecond=0)
         
 def parse_date(string):
     if string == None: 
@@ -63,7 +67,7 @@ def parse_date(string):
 
     year = 1970
     if hasYear == False:
-        now = i_datetime.datetime.now()
+        now = helpers.getNowWithOffset()
         gmtime = i_time.gmtime(now.timestamp())
         year = gmtime.tm_year
     else:
@@ -92,3 +96,16 @@ def parse_day_hour_minute(string):
     except ValueError:
         raise i_argparse.ArgumentTypeError(f"Failed to parse day/hour/minute")
         
+def parse_channel(string):
+    try:
+        if string.startswith('<#') and string.endswith('>'):
+            print(string[2:len(string)-1])
+            return string[2:len(string)-1]
+        else:
+            raise ValueError
+    except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse channel")    
+
+def parse_url(string):
+    try:
+        return string
+    except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse url")

@@ -1,2 +1,0 @@
-eventsArray = []
-exit = False

@@ -41,9 +41,14 @@ def createConfigFromTree(treeRoot):
     signupsNode = configNode.find("signups")
     if signupsNode != None:
         m_config.m_signupChannel = signupsNode.text
+        
     announcementsNode = configNode.find("announcements")
     if announcementsNode != None:
         m_config.m_announcementChannel = announcementsNode.text
+        
+    logsNode = configNode.find('logs')
+    if logsNode != None:
+        m_config.m_logsChannel = logsNode.text
     # Sort Order
     sortOrderNode = configNode.find('sortorder')
     if sortOrderNode != None:
@@ -158,6 +163,8 @@ def addConfigToTree(root):
     announcementsNode.text = m_config.m_announcementChannel
     signupsNode = tree.SubElement(config, 'signups')
     signupsNode.text = m_config.m_signupChannel
+    logsNode = tree.SubElement(config, 'logs')
+    logsNode.text = m_config.m_logsChannel
     # Sort Order
     sortOrderNode = tree.SubElement(config, 'sortorder')
     sortOrderNode.text = "Ascending" if m_config.m_isAscendingSort == True else "Descending"

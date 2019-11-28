@@ -336,6 +336,27 @@ class Command_Config_Signup(commands.Command):
         manager.publish()
         return Result(value=f"Signup channel set to {args.channel}")
 
+class Command_Config_Logs(commands.Command):
+    def __init__(self):
+        self.name = "logs"
+
+    requiredArgs = [
+        Argument("channel", type=parse_types.parse_channel, help="The name of the channel that logs will be posted to")
+    ]
+
+    def execute(self, args):
+        try:
+            parsedArgs = self.parseArgs(args)
+            return self.executeInternal(parsedArgs)
+        except Exception as e:
+            return Result(error=e.args)
+
+    def executeInternal(self, args):
+        # Validate Channel? Maybe do that at a higher level?
+        manager.m_config.m_logsChannel = args.channel
+        manager.publish()
+        return Result(value=f"Logs channel set to {args.channel}")
+
 class Command_Config_Timezone(commands.Command):
     def __init__(self):
         self.name = "timezone"
@@ -366,6 +387,7 @@ class Command_Config(commands.Command):
         # Channels
         Command_Config_Announcement(),
         Command_Config_Signup(),
+        Command_Config_Logs(),
         # Reminders
         Command_Config_Reminder(),
         # Time
@@ -379,6 +401,11 @@ class Command_Config(commands.Command):
         channelsResult = ["Channels"]
         channelsResult.append(f"Announcements : <#{manager.m_config.m_announcementChannel}>")
         channelsResult.append(f"Signups : <#{manager.m_config.m_signupChannel}>")
+        channelsResult.append(f"Logs : <#{manager.m_config.m_logsChannel}>")
+        # Sort Order
+        sortOrderResult = ["Sort Order"]
+        sortOrderStr = "Ascending" if manager.m_config.m_isAscendingSort else "Descending"
+        sortOrderResult.append(f"Sort Order : {sortOrderStr}")
         # Reminders
         remindersResult = ["Reminders"]
         for reminder in manager.m_config.m_reminders:
@@ -395,6 +422,7 @@ class Command_Config(commands.Command):
         result = [
             headingResult,
             channelsResult,
+            sortOrderResult,
             remindersResult,
             utcoffsetResult,
             reactionsResult
@@ -407,12 +435,14 @@ class Command_Config(commands.Command):
         for channelStr in result[1][1:]:
             formatedString = f"{formatedString}\n{channelStr}"
         formatedString = f"{formatedString}```"
+        # Sort Order
+        formatedString = f"{formatedString}\n```xl\n// {result[2][0]} \n{result[2][1:]}```"
         # Reminders
-        formatedString = f"{formatedString}```xl\n// {result[2][0]} \n{result[2][1:]}```"
+        formatedString = f"{formatedString}```xl\n// {result[3][0]} \n{result[3][1:]}```"
         # Time
-        formatedString = f"{formatedString}```xl\n// {result[3][0]} \n{result[3][1]}```"
-        # Reactions
         formatedString = f"{formatedString}```xl\n// {result[4][0]} \n{result[4][1]}```"
+        # Reactions
+        formatedString = f"{formatedString}```xl\n// {result[5][0]} \n{result[5][1]}```"
 
         return Result(value=formatedString)
 Command_Config()

@@ -52,8 +52,13 @@ async def postAnnouncementMessageAsync(message):
     await channel.send(message)
 
 async def postSignupMessageAsync(message):
-    signupChannelID = snEvents.config.m_signupChannel
+    signupChannelID = int(snEvents.config.m_signupChannel)
     channel = bot.get_channel(signupChannelID)
+    await channel.send(message)
+
+async def postLogMessageAsync(message):
+    logsChannelID = int(snEvents.config.m_logsChannel)
+    channel = bot.get_channel(logsChannelID)
     await channel.send(message)
 
 # Callbacks
@@ -187,6 +192,7 @@ async def check_events_async():
     await handle_dirty_events_async()
 
 async def check_reactions_async():
+    reactionsLogBuffer = ""
     for event in snEvents.events:
         if event.signupMessageID != None:
             signupChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
@@ -199,11 +205,16 @@ async def check_reactions_async():
                             for user in users:
                                 if user != bot.user:
                                     event.isDirty = True
-                                    print(f"{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}")
+                                    reactionStr = f"@{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
+                                    print(reactionStr)
+                                    reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
                                     event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
 
             except discord.errors.NotFound:
                 pass
+
+    if reactionsLogBuffer != "":
+        await postLogMessageAsync(reactionsLogBuffer)
 
 async def handle_dirty_events_async(allDirty=False):
     sChannel = bot.get_channel(int(snEvents.config.m_signupChannel))

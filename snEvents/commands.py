@@ -336,28 +336,6 @@ class Command_Config_Signup(commands.Command):
         manager.publish()
         return Result(value=f"Signup channel set to {args.channel}")
 
-class Command_Config_Roster(commands.Command):
-    def __init__(self):
-        self.name = "roster"
-
-    requiredArgs = [
-        Argument("channel", type=parse_types.parse_channel, help="The name of the channel that rosters will be posted to")
-    ]
-
-    def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
-
-    def executeInternal(self, args):
-        # Validate Channel? Maybe do that at a higher level?
-        manager.m_config.m_rosterChannel = args.channel
-        manager.publish()
-        return Result(value=f"Rosters channel set to {args.channel}")
-
-
 class Command_Config_Timezone(commands.Command):
     def __init__(self):
         self.name = "timezone"
@@ -388,7 +366,6 @@ class Command_Config(commands.Command):
         # Channels
         Command_Config_Announcement(),
         Command_Config_Signup(),
-        Command_Config_Roster(),
         # Reminders
         Command_Config_Reminder(),
         # Time
@@ -400,9 +377,8 @@ class Command_Config(commands.Command):
         headingResult = ["Configuration"]
         # Channels - Convert to channel from channel ID
         channelsResult = ["Channels"]
-        channelsResult.append(f"Announcements : {manager.m_config.m_announcementChannel}")
-        channelsResult.append(f"Signups : {manager.m_config.m_signupChannel}")
-        channelsResult.append(f"Rosters : {manager.m_config.m_rosterChannel}")
+        channelsResult.append(f"Announcements : <#{manager.m_config.m_announcementChannel}>")
+        channelsResult.append(f"Signups : <#{manager.m_config.m_signupChannel}>")
         # Reminders
         remindersResult = ["Reminders"]
         for reminder in manager.m_config.m_reminders:
@@ -414,7 +390,7 @@ class Command_Config(commands.Command):
         reactionsResult = ["Reactions"]
         reactionsResult.append(f"RSVP Reactions :\n")
         for key, value in manager.m_config.m_reactions.items():
-            reactionsResult.append(f"{key}:{value}\n")
+            reactionsResult[1] = f"{reactionsResult[1]}{value} : {key}\n"
 
         result = [
             headingResult,
@@ -432,11 +408,11 @@ class Command_Config(commands.Command):
             formatedString = f"{formatedString}\n{channelStr}"
         formatedString = f"{formatedString}```"
         # Reminders
-        formatedString = f"{formatedString}```xl\n// {result[2][0]} \n {result[2][1:]}```"
+        formatedString = f"{formatedString}```xl\n// {result[2][0]} \n{result[2][1:]}```"
         # Time
-        formatedString = f"{formatedString}```xl\n// {result[3][0]} \n {result[3][1]}```"
+        formatedString = f"{formatedString}```xl\n// {result[3][0]} \n{result[3][1]}```"
         # Reactions
-        formatedString = f"{formatedString}```xl\n// {results[4][0]} \n {result[3][1]}```"
+        formatedString = f"{formatedString}```xl\n// {result[4][0]} \n{result[4][1]}```"
 
         return Result(value=formatedString)
 Command_Config()

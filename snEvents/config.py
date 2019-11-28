@@ -4,7 +4,8 @@ class Config():
     # Channels
     m_announcementChannel = "#raid-announcements"
     m_signupChannel = "#raid-signups"
-    m_rosterChannel = "#raid-rosters"
+    # Sort Order
+    m_isAscendingSort = True
     # Time
     m_utcOffset = 0
     # Signups

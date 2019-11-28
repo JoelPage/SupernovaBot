@@ -41,7 +41,8 @@ def initialise():
     
 # Message Posting
 async def sendDebugMessageAsync(message):
-    debugChannelID = 640834927981494276
+    #debugChannelID = 640834927981494276
+    debugChannelID = 648954586614202381
     channel = bot.get_channel(debugChannelID)
     await channel.send(message)
 
@@ -79,14 +80,6 @@ async def onEventDeletedAsync(signupMessageID, rosterMessageID):
         try:
             sMessage = await signupChannel.fetch_message(signupMessageID)
             await sMessage.delete()
-        except discord.errors.NotFound:
-            pass
-    # Rosters
-    if rosterMessageID != None:
-        rosterChannel = bot.get_channel(int(snEvents.config.m_rosterChannel))
-        try:
-            rMessage = await rosterChannel.fetch_message(rosterMessageID)
-            await rMessage.delete()
         except discord.errors.NotFound:
             pass
 
@@ -214,13 +207,17 @@ async def check_reactions_async():
 
 async def handle_dirty_events_async(allDirty=False):
     sChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
-    rChannel = bot.get_channel(int(snEvents.config.m_rosterChannel))
 
     if allDirty == True:
         await sChannel.purge(limit=None, check=lambda msg: not msg.pinned)
-        await rChannel.purge(limit=None, check=lambda msg: not msg.pinned)
 
-    for event in reversed(snEvents.events):
+    eventsList = None
+    if snEvents.config.m_isAscendingSort == True:
+        eventsList = snEvents.events
+    else:
+        eventsList = reversed(snEvents.events)
+
+    for event in eventsList:
         if event.isDirty == True or allDirty == True:    
             print(f"{event.name} is dirty!")
             splitSignups = {}
@@ -253,14 +250,8 @@ async def handle_dirty_events_async(allDirty=False):
                 sDateTime = f"{sDateTime}>"
             sDateTime = f"```xl\n{sDateTime}```"
 
-            # Signup Info
-            sSignupInfo = ""
-            for key, value in splitSignups.items():
-                sSignupInfo = f"{sSignupInfo}<{key} {len(value)}>\n"
-            sSignupInfo = f"```xl\n{sSignupInfo}```"
-            
             # Description
-            sDescription = f"{sDateTime}\n{sSignupInfo}\n{event.description}"
+            sDescription = f"{sDateTime}\n{event.description}"
 
             sEmbed = discord.Embed(title=f"{event.name}", description=sDescription)
             if event.thumbnail:
@@ -268,20 +259,20 @@ async def handle_dirty_events_async(allDirty=False):
             if event.image:
                 sEmbed.set_image(url=event.image)            
             sEmbed.set_footer(text=f"ID:{event.id}")
-
-            # Edit Roster Embed
-            rDescription = ""
+            
+            # Edit Roster Field
             for key, value in splitSignups.items():
-                rDescription = f'{rDescription}**"{key}"\n======================**\n'
+                fName = f'**{key} {len(value)}\n========**'
+                
+                fValue = ""
                 for userId in value:
-                    rDescription = f"{rDescription}<@{userId}>\n"
-
+                    fValue = f"{fValue}<@{userId}>\n"
+                if fValue == "":
+                    fValue = "Nobody"
+                sEmbed.add_field(name=fName, value=fValue)
 
             # Edit Signup Embed
-            sDescription = f"{sDateTime}{sSignupInfo}{event.description}"
-
-            rEmbed = discord.Embed(title=f"{event.name}", description=rDescription)
-            rEmbed.set_footer(text=f"ID:{event.id}")
+            sDescription = f"{sDateTime}{event.description}"
 
             # Build array of embeds - Then we can delay purge to outside the loop
             sMessage = None
@@ -295,14 +286,6 @@ async def handle_dirty_events_async(allDirty=False):
 
             for emoji in defaultReactionEmojis:
                 await sMessage.add_reaction(emoji)
-
-            rMessage = None
-            if event.rosterMessageID == None or allDirty == True:
-                rMessage = await rChannel.send(embed=rEmbed)
-                event.rosterMessageID = rMessage.id
-            else:
-                rMessage = await rChannel.fetch_message(event.rosterMessageID)
-                await rMessage.edit(embed=rEmbed)
 
             event.isDirty = False
             snEvents.manager.publish()

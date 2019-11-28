@@ -35,6 +35,101 @@ def deserialise():
     createConfigFromTree(eventsTree.getroot())
     createEventsArrayFromTree(eventsTree.getroot())
 
+def createConfigFromTree(treeRoot):
+    configNode = treeRoot.find("config")
+    # Channels
+    signupsNode = configNode.find("signups")
+    if signupsNode != None:
+        m_config.m_signupChannel = signupsNode.text
+    announcementsNode = configNode.find("announcements")
+    if announcementsNode != None:
+        m_config.m_announcementChannel = announcementsNode.text
+    # Sort Order
+    sortOrderNode = configNode.find('sortorder')
+    if sortOrderNode != None:
+        m_config.m_isAscendingSort = True if sortOrderNode.text == "Ascending" else False
+    # Time
+    utcOffsetNode = configNode.find("utcoffset")
+    m_config.m_utcOffset = float(utcOffsetNode.text)
+    # Reminders
+    m_config.m_reminders.clear()
+    remindersNode = configNode.find("reminders")
+    if remindersNode != None:
+        reminderNodes = remindersNode.findall("reminder")
+        for reminderNode in reminderNodes:
+            hours = float(reminderNode.attrib["hours"])
+            m_config.m_reminders.append(Reminder(hours=hours))
+    # Reactions
+    m_config.m_reactions.clear()
+    reactionsNode = configNode.find("reactions")
+    if reactionsNode != None:
+        reactionNodes = reactionsNode.findall("reaction")
+        for reactionNode in reactionNodes:
+            emojiAsInt = int(reactionNode.attrib["emoji"])
+            emojiAsBytes = emojiAsInt.to_bytes(3, sys.byteorder)
+            emojiAsUnicode = emojiAsBytes.decode("utf-8")
+            value = reactionNode.attrib["value"]
+            m_config.m_reactions[emojiAsUnicode] = value
+
+def createEventsArrayFromTree(treeRoot):
+    global m_events
+    m_events.clear()
+    for events in treeRoot.findall("events"):
+        for event in events.findall("event"):
+            eventName = event.find("name").text
+            id = event.find("id").text
+            start = datetime.fromtimestamp(int(event.find("start").text))
+            end = None
+            endNode = event.find("end")
+            if endNode != None:
+                end = datetime.fromtimestamp(int(endNode.text))
+            started = False
+            startedNode = event.find("started")
+            if startedNode != None:
+                started = True if startedNode.text == "True" else False
+            thumbnail = None
+            thumbnailNode = event.find("thumbnail")
+            if thumbnailNode != None:
+                thumbnail = thumbnailNode.text
+            image = None
+            imageNode = event.find("image")
+            if imageNode != None:
+                image = imageNode.text
+            description = None
+            descriptionNode = event.find("description")
+            if descriptionNode != None:
+                description = descriptionNode.text
+            reminded = []
+            remindedNode = event.find("reminded")
+            if remindedNode != None:
+                for reminder in remindedNode.findall("reminder"):
+                    reminded.append(float(reminder.text))
+            signupMessageID = None
+            signupMessageIDNode = event.find("signupmessageid")
+            if signupMessageIDNode != None:
+                signupMessageID = int(signupMessageIDNode.text)
+            rosterMessageID = None
+            rosterMessageIDNode = event.find("rostermessageid")
+            if rosterMessageIDNode != None:
+                rosterMessageID = int(rosterMessageIDNode.text)
+            signups = {}
+            signupsNode = event.find("signups")
+            if signupsNode != None:
+                signupNodes = signupsNode.findall("signup")
+                for signupNode in signupNodes:
+                    userId = int(signupNode.attrib["user"])
+                    reaction = signupNode.attrib["reaction"]
+                    signups[userId] = reaction
+
+            m_events.append(Event(eventName, start, id=id, end=end, started=started, 
+            description=description, image=image, thumbnail=thumbnail, reminded=reminded,
+            signupMessageID=signupMessageID, rosterMessageID=rosterMessageID,
+            signups=signups))
+    sortEvents()
+
+def sortEvents():
+    m_events.sort(key=eventSortFunc)
+
 def publish():
     sortEvents()
     serialise()
@@ -63,8 +158,9 @@ def addConfigToTree(root):
     announcementsNode.text = m_config.m_announcementChannel
     signupsNode = tree.SubElement(config, 'signups')
     signupsNode.text = m_config.m_signupChannel
-    rostersNode = tree.SubElement(config, 'rosters')
-    rostersNode.text = m_config.m_rosterChannel
+    # Sort Order
+    sortOrderNode = tree.SubElement(config, 'sortorder')
+    sortOrderNode.text = "Ascending" if m_config.m_isAscendingSort == True else "Descending"
     # Time
     utcoffsetNode = tree.SubElement(config, 'utcoffset')
     utcoffsetNode.text = f"{m_config.m_utcOffset}"
@@ -150,97 +246,6 @@ def removeEvent(id):
         
         resultStr = f"Event {id} {foundEvent.name} removed!"
     return resultStr
-
-def createConfigFromTree(treeRoot):
-    configNode = treeRoot.find("config")
-    # Channels
-    signupsNode = configNode.find("signups")
-    m_config.m_signupChannel = signupsNode.text
-    announcementsNode = configNode.find("announcements")
-    m_config.m_announcementChannel = announcementsNode.text
-    rostersNode = configNode.find("rosters")
-    m_config.m_rosterChannel = rostersNode.text
-    # Time
-    utcOffsetNode = configNode.find("utcoffset")
-    m_config.m_utcOffset = float(utcOffsetNode.text)
-    # Reminders
-    m_config.m_reminders.clear()
-    remindersNode = configNode.find("reminders")
-    if remindersNode != None:
-        reminderNodes = remindersNode.findall("reminder")
-        for reminderNode in reminderNodes:
-            hours = float(reminderNode.attrib["hours"])
-            m_config.m_reminders.append(Reminder(hours=hours))
-    # Reactions
-    m_config.m_reactions.clear()
-    reactionsNode = configNode.find("reactions")
-    if reactionsNode != None:
-        reactionNodes = reactionsNode.findall("reaction")
-        for reactionNode in reactionNodes:
-            emojiAsInt = int(reactionNode.attrib["emoji"])
-            emojiAsBytes = emojiAsInt.to_bytes(3, sys.byteorder)
-            emojiAsUnicode = emojiAsBytes.decode("utf-8")
-            value = reactionNode.attrib["value"]
-            m_config.m_reactions[emojiAsUnicode] = value
-
-def createEventsArrayFromTree(treeRoot):
-    global m_events
-    m_events.clear()
-    for events in treeRoot.findall("events"):
-        for event in events.findall("event"):
-            eventName = event.find("name").text
-            id = event.find("id").text
-            start = datetime.fromtimestamp(int(event.find("start").text))
-            end = None
-            endNode = event.find("end")
-            if endNode != None:
-                end = datetime.fromtimestamp(int(endNode.text))
-            started = False
-            startedNode = event.find("started")
-            if startedNode != None:
-                started = True if startedNode.text == "True" else False
-            thumbnail = None
-            thumbnailNode = event.find("thumbnail")
-            if thumbnailNode != None:
-                thumbnail = thumbnailNode.text
-            image = None
-            imageNode = event.find("image")
-            if imageNode != None:
-                image = imageNode.text
-            description = None
-            descriptionNode = event.find("description")
-            if descriptionNode != None:
-                description = descriptionNode.text
-            reminded = []
-            remindedNode = event.find("reminded")
-            if remindedNode != None:
-                for reminder in remindedNode.findall("reminder"):
-                    reminded.append(float(reminder.text))
-            signupMessageID = None
-            signupMessageIDNode = event.find("signupmessageid")
-            if signupMessageIDNode != None:
-                signupMessageID = int(signupMessageIDNode.text)
-            rosterMessageID = None
-            rosterMessageIDNode = event.find("rostermessageid")
-            if rosterMessageIDNode != None:
-                rosterMessageID = int(rosterMessageIDNode.text)
-            signups = {}
-            signupsNode = event.find("signups")
-            if signupsNode != None:
-                signupNodes = signupsNode.findall("signup")
-                for signupNode in signupNodes:
-                    userId = int(signupNode.attrib["user"])
-                    reaction = signupNode.attrib["reaction"]
-                    signups[userId] = reaction
-
-            m_events.append(Event(eventName, start, id=id, end=end, started=started, 
-            description=description, image=image, thumbnail=thumbnail, reminded=reminded,
-            signupMessageID=signupMessageID, rosterMessageID=rosterMessageID,
-            signups=signups))
-    sortEvents()
-
-def sortEvents():
-    m_events.sort(key=eventSortFunc)
 
 def eventSortFunc(event):
     return event.start.timestamp()

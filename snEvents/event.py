@@ -3,7 +3,7 @@ import snEvents.uid as uid
 class Event():
     def __init__(self, name, start, id=None, end=None, started=False, 
     reminded=None, description=None, image=None, thumbnail=None,
-    signupMessageID=None, rosterMessageID=None, signups=None):
+    signupMessageID=None, signups=None):
         #print(f"Event({uid}, {name}, {start}, {end})")
         if id == None:
             self.id = uid.get()
@@ -36,4 +36,3 @@ class Event():
         self.announcements = []
         # Discord Specific
         self.signupMessageID = signupMessageID
-        self.rosterMessageID = rosterMessageID

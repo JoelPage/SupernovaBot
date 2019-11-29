@@ -12,24 +12,26 @@ datetime = pyDatetime.datetime
 timedelta = pyDatetime.timedelta
 # Variables
 getTimeInMilliseconds = lambda: int(round(time.time() * 1000))
-# Functions
+# Delegates
 def delegate1(a):
     print(f"delegate1({a})")
 
 def delegate2(a, b):
     print(f"delegate2({a},{b})")
 
-def getNowWithOffset():
+# Functions
+def debug_print(message):
+    now = get_now_time_string()
+    print(f"{now}:{message}")
+
+def get_now_offset():
     offsetHours = manager.m_config.m_utcOffset
     utcnow = datetime.utcnow()
     offsetDelta = timedelta(hours=offsetHours)
     return utcnow + offsetDelta
 
-def CreateDummyEvent(fileName):
-	xml_helpers.createDummyEvent(fileName) 	
-
-def mergeTimeWithDateBase(base,t,d):
-    print(base,t,d)
+def merge_time_with_date_base(base,t,d):
+    debug_print(f"merge_time_with_date_base({base},{t},{d})")
     if t != None and d != None:
         gmStart = time.gmtime(t.timestamp())
         return d.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
@@ -49,8 +51,9 @@ def mergeTimeWithDateBase(base,t,d):
     else:
         return None
 
-def timeDeltaToString(td):
-    # Insert and between penultimate and ultimate string
+def time_delta_to_string(td):
+    debug_print(f"time_delta_to_string({td})")
+    # Insert 'and' between penultimate and ultimate string
     tdDays = td.days
     tdHours = td.seconds//3600
     tdMinutes = (td.seconds//60)%60
@@ -77,9 +80,11 @@ def timeDeltaToString(td):
             timeStr = f"{timeStr}{td.seconds} seconds "
     return timeStr
 
-def getNowTimeStr():
+def get_now_time_string():
     gmTimeNow = time.gmtime(pyDatetime.datetime.now().timestamp())
     return f"{gmTimeNow.tm_hour:02d}:{gmTimeNow.tm_min:02d}"
+
+
 #def CreateFunctionThread(func, args=None):
 #	#print("Helpers - Creating Function Thread")
 #	if args:
@@ -113,3 +118,6 @@ def getNowTimeStr():
 #	#print("Helpers - Starting Function Thread")
 #	await thread.start()
 #	return thread
+
+#def CreateDummyEvent(fileName):
+#	xml_helpers.createDummyEvent(fileName)

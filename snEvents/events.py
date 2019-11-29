@@ -8,7 +8,7 @@ Event = event.Event
 events = manager.m_events
 config = manager.m_config
 # Functions
-checkEventsAsync = manager.checkEventsAsync
+check_events = manager.check_events
 
 
 #import command_manager as i_command_manager

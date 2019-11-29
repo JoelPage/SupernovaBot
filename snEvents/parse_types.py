@@ -20,6 +20,9 @@ def parse_time(string):
     if len(splitString[0]) < 1 or len(splitString[0]) > 2: 
         raise ValueError("Invalid time please provide Hours:Minutes")
 
+    if len(splitString[1]) != 2 or len(splitString[1]) != 4:
+        raise ValueError("Invalid format! HH:MM or HH:MMam")
+
     isPM = splitString[1].upper().endswith("PM")
     splitString[1] = splitString[1][:2]
 

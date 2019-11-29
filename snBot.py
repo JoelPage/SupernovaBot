@@ -36,17 +36,17 @@ def run():
 
 def initialise():
     print("Initialise Bot")
-    snEvents.manager.m_onEventDeletedAsync = onEventDeletedAsync
+    snEvents.manager.on_event_deleted_async = on_event_deleted_async
     snEvents.manager.m_signupEmojis = defaultReactionEmojis
     
 # Message Posting
-async def sendDebugMessageAsync(message):
+async def send_debug_message_async(message):
     #debugChannelID = 640834927981494276
     debugChannelID = 648954586614202381
     channel = bot.get_channel(debugChannelID)
     await channel.send(message)
 
-async def postAnnouncementMessageAsync(message):
+async def post_announcement_message_async(message):
     announcementChannelID = int(snEvents.config.m_announcementChannel)
     channel = bot.get_channel(announcementChannelID)
     await channel.send(message)
@@ -56,7 +56,7 @@ async def postSignupMessageAsync(message):
     channel = bot.get_channel(signupChannelID)
     await channel.send(message)
 
-async def postLogMessageAsync(message):
+async def post_log_message_async(message):
     logsChannelID = int(snEvents.config.m_logsChannel)
     channel = bot.get_channel(logsChannelID)
     await channel.send(message)
@@ -74,12 +74,11 @@ Please set your nickname to be your in-game character name and leave us a messag
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
     initialise()
-    bot.loop.create_task(updateAsync())
+    bot.loop.create_task(update_async())
 
-async def onEventDeletedAsync(signupMessageID, rosterMessageID):
-    print(f"onEventDeleted({signupMessageID},{rosterMessageID})")
+async def on_event_deleted_async(signupMessageID):
+    snHelpers.debug_print(f"on_event_deleted_async({signupMessageID})")
 
-    # Signups
     if signupMessageID != None:
         signupChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
         try:
@@ -117,6 +116,8 @@ async def skip(ctx, *args):
     else:
         await ctx.send(result.value)
 
+    await check_events_async()
+
 @bot.command()
 @commands.has_role('Officer')
 async def events(ctx, *args):
@@ -139,10 +140,12 @@ async def edit(ctx, *args):
     else:
         await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
 
+    await handle_dirty_events_async()
+
 @bot.command()
 @commands.has_role('Officer')
 async def config(ctx, *args):
-    print(f"Recieved Discord Command - config({args})")
+    snHelpers.debug_print(f"Recieved Discord Command - config({args})")
     result = snCommands.executeCommand("CONFIG", args)
     if result.error != None:
         await ctx.send(f"```{result.error}```")
@@ -151,47 +154,44 @@ async def config(ctx, *args):
         await ctx.send(f"{result.value}")
 
 # Update Loop
-async def updateAsync():
+async def update_async():
+    snHelpers.debug_print("update_async()")
     interval = 30
     print("Waiting for bot to be ready...")
-    nowStr = snHelpers.getNowTimeStr()
-    await sendDebugMessageAsync(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.")
+    nowStr = snHelpers.get_now_time_string()
+    await send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.")
     await bot.wait_until_ready()
     while True:
         await check_events_async()
         await asyncio.sleep(interval)
 
 async def check_events_async():
-    nowStr = snHelpers.getNowTimeStr()
-    print(f"Checking Events : {nowStr}")
-    
-    results = await snEvents.checkEventsAsync()
-    # We need to do different things with each result
-    # Detect End do nothing
-    # Detect Start post to Announcements
-    # Detect Reminder post to Announcements
-    # Reminder structure
-    #   - Time
-    #   - Message
-    #   - hasBeenPosted
+    snHelpers.debug_print("check_events_async()")
+    # Check for events that have ended
+    results = snEvents.check_events()
+    # Remove embeds for events that have finished
+    for removedEvent in snEvents.manager.m_removedEvents:
+        await on_event_deleted_async(removedEvent.signupMessageID)
+    snEvents.manager.m_removedEvents.clear()
     # Ending
     if results[0] != None and len(results[0]) > 1:
-        await sendDebugMessageAsync(results[0])
+        await send_debug_message_async(results[0])
     # Starting
     if results[1] != None and len(results[1]) > 1:
         for result in results[1][1:]:
             announcementStr = f"@ everyone {result} begins!"
-            await postAnnouncementMessageAsync(announcementStr)
+            await post_announcement_message_async(announcementStr)
     # Reminders
     if results[2] != None and len(results[2]) > 1:
         for result in results[2][1:]:
             reminderStr = f"@ everyone {result}"
-            await postAnnouncementMessageAsync(reminderStr)
+            await post_announcement_message_async(reminderStr)
 
     await check_reactions_async()
     await handle_dirty_events_async()
 
 async def check_reactions_async():
+    snHelpers.debug_print("check_reactions_async()")
     reactionsLogBuffer = ""
     for event in snEvents.events:
         if event.signupMessageID != None:
@@ -206,7 +206,7 @@ async def check_reactions_async():
                                 if user != bot.user:
                                     event.isDirty = True
                                     reactionStr = f"@{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
-                                    print(reactionStr)
+                                    snHelpers.debug_print(reactionStr)
                                     reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
                                     event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
 
@@ -214,22 +214,26 @@ async def check_reactions_async():
                 pass
 
     if reactionsLogBuffer != "":
-        await postLogMessageAsync(reactionsLogBuffer)
+        await post_log_message_async(reactionsLogBuffer)
 
 async def handle_dirty_events_async(allDirty=False):
+    snHelpers.debug_print(f"handle_dirty_events_async({allDirty})")
     sChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
 
+    # allDirty override, flush out all events and recreate them
     if allDirty == True:
         await sChannel.purge(limit=None, check=lambda msg: not msg.pinned)
 
     eventsList = None
     if snEvents.config.m_isAscendingSort == True:
-        eventsList = snEvents.events
-    else:
         eventsList = reversed(snEvents.events)
+    else:
+        eventsList = snEvents.events
 
+    eventWasDirty = False
     for event in eventsList:
         if event.isDirty == True or allDirty == True:    
+            eventWasDirty = True
             print(f"{event.name} is dirty!")
             splitSignups = {}
             for key, value in snEvents.config.m_reactions.items():
@@ -299,4 +303,6 @@ async def handle_dirty_events_async(allDirty=False):
                 await sMessage.add_reaction(emoji)
 
             event.isDirty = False
-            snEvents.manager.publish()
+
+    if allDirty == True or eventWasDirty == True: 
+        snEvents.manager.publish()

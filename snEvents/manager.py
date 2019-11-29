@@ -20,22 +20,24 @@ Reminder = snReminder.Reminder
 # Maybe if looping gets slow
 m_xmlFilePath = "events.xml"
 m_config = snConfig.Config()
-m_reminders = []
 m_events = []
 m_exit = False
-m_onEventDeletedAsync = helpers.delegate2
+m_onEventDeletedAsync = helpers.delegate1
 m_onEventCreatedAsync = helpers.delegate1
+m_removedEvents = []
 
 def initialise():
+    helpers.debug_print("initialise()")
     deserialise()
 
 def deserialise():
-    print("Deserialising")
+    helpers.debug_print("deserialise()")
     eventsTree = xml_helpers.fileRead(m_xmlFilePath)
-    createConfigFromTree(eventsTree.getroot())
-    createEventsArrayFromTree(eventsTree.getroot())
+    create_config_from_tree(eventsTree.getroot())
+    create_events_from_tree(eventsTree.getroot())
 
-def createConfigFromTree(treeRoot):
+def create_config_from_tree(treeRoot):
+    helpers.debug_print(f"create_config_from_tree({treeRoot})")
     configNode = treeRoot.find("config")
     # Channels
     signupsNode = configNode.find("signups")
@@ -76,10 +78,10 @@ def createConfigFromTree(treeRoot):
             value = reactionNode.attrib["value"]
             m_config.m_reactions[emojiAsUnicode] = value
 
-def createEventsArrayFromTree(treeRoot):
+def create_events_from_tree(root):
     global m_events
     m_events.clear()
-    for events in treeRoot.findall("events"):
+    for events in root.findall("events"):
         for event in events.findall("event"):
             eventName = event.find("name").text
             id = event.find("id").text
@@ -113,10 +115,6 @@ def createEventsArrayFromTree(treeRoot):
             signupMessageIDNode = event.find("signupmessageid")
             if signupMessageIDNode != None:
                 signupMessageID = int(signupMessageIDNode.text)
-            rosterMessageID = None
-            rosterMessageIDNode = event.find("rostermessageid")
-            if rosterMessageIDNode != None:
-                rosterMessageID = int(rosterMessageIDNode.text)
             signups = {}
             signupsNode = event.find("signups")
             if signupsNode != None:
@@ -128,35 +126,41 @@ def createEventsArrayFromTree(treeRoot):
 
             m_events.append(Event(eventName, start, id=id, end=end, started=started, 
             description=description, image=image, thumbnail=thumbnail, reminded=reminded,
-            signupMessageID=signupMessageID, rosterMessageID=rosterMessageID,
-            signups=signups))
-    sortEvents()
+            signupMessageID=signupMessageID, signups=signups))
 
-def sortEvents():
-    m_events.sort(key=eventSortFunc)
+    sort_events()
+
+def sort_events():
+    helpers.debug_print("sort_events()")
+    m_events.sort(key=event_sort_by)
+
+def event_sort_by(event):
+    helpers.debug_print(f"event_sort_by({event})")
+    return event.start.timestamp()
 
 def publish():
-    sortEvents()
+    helpers.debug_print("publish()")
+    sort_events()
     serialise()
 
 def serialise():
-    print("Serialising")
-    treeRoot = createTree()
-    writeEventsToFile(treeRoot)
+    helpers.debug_print("serialise()")
+    treeRoot = create_tree()
+    write_tree_to_file(treeRoot)
 
-def createTree():
-    root = initialiseTree()
-    addConfigToTree(root)
-    addEventsToTree(root)
+def create_tree():
+    root = initialise_tree()
+    add_config_to_tree(root)
+    add_events_to_tree(root)
     return root
 
-def initialiseTree():
+def initialise_tree():
     root = tree.Element('root')
     tree.SubElement(root, 'config')
     tree.SubElement(root, 'events')
     return root
 
-def addConfigToTree(root):
+def add_config_to_tree(root):
     config = root.find('config')
     # Channels
     announcementsNode = tree.SubElement(config, 'announcements')
@@ -187,11 +191,12 @@ def addConfigToTree(root):
         reactionNode.set('emoji', f"{emojiAsInt}")
         reactionNode.set('value', value)
 
-def addEventsToTree(root):
+def add_events_to_tree(root):
     for event in m_events:
-        addEventToTree(root, event)
+        add_event_to_tree(root, event)
 
-def addEventToTree(root, event):
+def add_event_to_tree(root, event):
+    helpers.debug_print(f"addEventsToTree({root},{event})")
     eventsNode = root.find('events')
     eventNode = tree.SubElement(eventsNode, 'event')
     nameNode = tree.SubElement(eventNode, 'name')
@@ -219,48 +224,43 @@ def addEventToTree(root, event):
         for reminded in event.reminded:
             reminderNode = tree.SubElement(remindedNode, "reminder")
             reminderNode.text = f"{reminded}"
-    if event.rosterMessageID != None:
-        rosterMsgIdNode = tree.SubElement(eventNode, "rostermessageid")
-        rosterMsgIdNode.text = f"{event.rosterMessageID}"
     if event.signupMessageID != None:
         signupMsgIdNode = tree.SubElement(eventNode, "signupmessageid")
         signupMsgIdNode.text = f"{event.signupMessageID}"
     signupsNode = tree.SubElement(eventNode, "signups")
-    print(event.signups)
     for key, value in event.signups.items():
         signupNode = tree.SubElement(signupsNode, "signup")
         signupNode.set("user", f"{key}")
         signupNode.set("reaction", value)
 
-def writeEventsToFile(root):
+def write_tree_to_file(root):
     xml_helpers.fileWrite(root, m_xmlFilePath)
 
-def findEventByUID(id):
+def find_event_by_id(id):
     for event in m_events:
         if event.id == id:
             return event
     return None
 
-def removeEvent(id):
-    resultStr = "Something went wrong."
-    foundEvent = findEventByUID(id)
-    if foundEvent == None:
-        resultStr = f"No event found with UID:{id}"
+def remove_event(event):
+    helpers.debug_print(f"remove_event({event})")
+    m_removedEvents.append(event)
+    m_events.remove(event)
+    publish()
+    return f"Event {event.name} removed!"
+
+def remove_event_by_id(id):
+    helpers.debug_print(f"remove_event_by_id({id})")
+    event = find_event_by_id(id)
+    if event == None:
+        return f"No event found with id:{id}"
     else:
-        # Push Message IDs to removal buffer
-        m_events.remove(foundEvent)
-        publish()
-        
-        resultStr = f"Event {id} {foundEvent.name} removed!"
-    return resultStr
+        return remove_event(event)
 
-def eventSortFunc(event):
-    return event.start.timestamp()
-
-def readEventsFromFile():
+def read_tree_from_file():
     xml_helpers.fileRead(m_xmlFilePath)
 
-async def checkEventsAsync():
+def check_events():
     # There are probably multiple things that need to happen here.
     # Check that events are still active.
     # Check reminders/announcements for events.
@@ -269,25 +269,24 @@ async def checkEventsAsync():
     # in discord by the bot.
     results = []
     # End Check
-    endCheckResults = await checkEventsEndingAsync()
+    endCheckResults = check_events_ending()
     results.append(endCheckResults)
     # Start Check
-    startCheckResults = checkEventsStarting()
+    startCheckResults = check_events_starting()
     results.append(startCheckResults)
     # Reminder Check
-    reminderCheckResults = checkEventReminders()
+    reminderCheckResults = check_event_reminders()
     results.append(reminderCheckResults)
 
     return results
 
-async def checkEventsEndingAsync():
+def check_events_ending():
     removeResults = ["Events Removed as their endtime has passed."]
-    now = helpers.getNowWithOffset()
+    now = helpers.get_now_offset()
     for event in m_events:
         if event.end != None and event.end < now:
             print(f"Event {event.id} {event.name} removed!")
-            await m_onEventDeletedAsync(event.signupMessageID, event.rosterMessageID)
-            m_events.remove(event)
+            remove_event(event)
             removeResults.append(f":id: {event.id} {event.name}")
     if len(removeResults) > 1:
         publish()
@@ -295,9 +294,9 @@ async def checkEventsEndingAsync():
     else:
         return None
 
-def checkEventsStarting():
+def check_events_starting():
     startResults = ["Events that started since the last check."]
-    now = helpers.getNowWithOffset()
+    now = helpers.get_now_offset()
     for event in m_events:
         if event.started == False and event.start < now:
             startResults.append(f"{event.name}")
@@ -308,9 +307,9 @@ def checkEventsStarting():
     else:
         return None
 
-def checkEventReminders():
+def check_event_reminders():
     reminderResults = ["Events that have a reminder."]
-    now = helpers.getNowWithOffset()
+    now = helpers.get_now_offset()
     for reminder in m_config.m_reminders:
         for event in m_events:
             if reminder.hours not in event.reminded:
@@ -319,7 +318,7 @@ def checkEventReminders():
                 if now > reminderTime:
                     event.reminded.append(reminder.hours)
                     startDelta = event.start - now
-                    reminderResults.append(f"{event.name} starts in {helpers.timeDeltaToString(startDelta)}")
+                    reminderResults.append(f"{event.name} starts in {helpers.time_delta_to_string(startDelta)}")
     if len(reminderResults) > 1:    
         publish()
         return reminderResults

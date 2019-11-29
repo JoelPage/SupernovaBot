@@ -21,7 +21,7 @@ Reminder = snReminder.Reminder
 datetime = pyDateTime.datetime
 timedelta = pyDateTime.timedelta
 # Function Aliases
-timeDeltaToString = helpers.timeDeltaToString
+time_delta_to_string = helpers.time_delta_to_string
 
 # TODO : This should be a generic command
 class Command_Exit(commands.Command):
@@ -43,12 +43,12 @@ class Command_Events(commands.Command):
         for event in m_events:
             if event.start > now:
                 timeDelta = event.start - now
-                timeStr = timeDeltaToString(timeDelta)
+                timeStr = time_delta_to_string(timeDelta)
                 results[1] = f"{results[1]}:id:`{event.id}` ~ **{event.name}** Begins in {timeStr}\n" 
             else:
                 if event.end != None:
                     timeDelta = event.end - now
-                    timeStr = timeDeltaToString(timeDelta)
+                    timeStr = time_delta_to_string(timeDelta)
                     results[1] = f"{results[1]}:id:`{event.id}` ~ **{event.name}** Ends in {timeStr}\n"
                 else:
                     results[1] = f"{results[1]}:id:`{event.id}` ~ **{event.name}** event has no end\n"
@@ -155,7 +155,6 @@ class Command_Skip(commands.Command):
         try:
             parsedArgs = self.parseArgs(args)
             result = manager.removeEvent(parsedArgs.UID)
-
             return Result(value=result)
         except Exception as e:
             return Result(error=e.args)
@@ -191,6 +190,7 @@ class Command_Edit(commands.Command):
             foundEvent = manager.findEventByUID(parsedArgs.UID)
             if foundEvent == None:
                 raise Exception(f"No event found with ID {parsedArgs.UID}")
+            foundEvent.isDirty = True
             # String Updates
             if parsedArgs.name != None:
                 foundEvent.name = parsedArgs.name
@@ -284,7 +284,7 @@ class Command_Config_Reminder(commands.Command):
 
     def executeInternal(self, args):
         if args.addremove == "add":
-            manager.m_reminders.append(Reminder(args.hours, args.message))
+            manager.m_config.m_reminders.append(Reminder(args.hours, args.message))
             manager.publish()
             return Result(value=f"Reminder Added {args.hours} hours before events begin.")
         else:

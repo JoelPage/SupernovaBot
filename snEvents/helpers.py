@@ -1,8 +1,11 @@
 # Python
+import os as pyOs
+import calendar as pyCalendar
 import time
 import datetime as pyDatetime
+import asyncio as pyAsyncio
+from dotenv import load_dotenv
 # General
-import xml_helpers
 import threading_helpers
 # Supernova Events
 import snEvents.manager as snManager
@@ -19,10 +22,21 @@ def delegate1(a):
 def delegate2(a, b):
     print(f"delegate2({a},{b})")
 
+# Async
+async def sleep_async(seconds):
+    await pyAsyncio.sleep(seconds)
+
 # Functions
 def debug_print(message):
     now = get_now_time_string()
-    print(f"{now}:{message}")
+    print(f"{now} - {message}")
+
+def get_month_as_string_abbr(month):
+    return pyCalendar.month_abbr[month]
+
+def get_discord_bot_token():
+    load_dotenv()    
+    return pyOs.getenv('DISCORD_TOKEN')
 
 def get_now_offset():
     offsetHours = manager.m_config.m_utcOffset

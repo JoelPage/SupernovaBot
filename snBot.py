@@ -1,10 +1,3 @@
-# Python
-import os
-import asyncio
-import datetime
-import time
-import calendar
-from dotenv import load_dotenv
 # Discord
 import discord
 from discord.ext import commands as commands
@@ -14,35 +7,34 @@ import snCommands.commands as snCommands
 import snEvents.events as snEvents
 import snEvents.helpers as snHelpers
 
-yesEmoji = "✅"
-noEmoji = "❌"
-unsureEmoji = "❔"
-defaultReactionEmojis = [ yesEmoji, noEmoji, unsureEmoji]
-reactionToRSVP = { 
-    yesEmoji : "Yes",
-    noEmoji : "No",
-    unsureEmoji : "Unsure" 
-    }
-
 # Setup
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
 bot = commands.Bot(command_prefix='!')
 
 # Run
-def run():
-    print("Connecting bot to discord...")
-    bot.run(TOKEN)
+def run_offline():
+    snHelpers.debug_print("Bot running in offline mode!")
+    # TODO : Create async task 
+    #while True:
+        #snHelpers.debug_print("Offline bot async loop.")
+        #snHelpers.sleep_async(30)
 
-def initialise():
-    print("Initialise Bot")
-    snEvents.manager.on_event_deleted_async = on_event_deleted_async
-    snEvents.manager.m_signupEmojis = defaultReactionEmojis
+def run_online():
+    snHelpers.debug_print("Connecting bot to discord...")
+    token = snHelpers.get_discord_bot_token()
+    bot.run(token)
     
+# Callbacks
+@bot.event
+async def on_ready():
+    snHelpers.debug_print(f'{bot.user.name} has connected to Discord!')
+    bot.loop.create_task(update_async())
+
 # Message Posting
 async def send_debug_message_async(message):
-    #debugChannelID = 640834927981494276
-    debugChannelID = 648954586614202381
+    snHelpers.debug_print(f"send_debug_message_async({message})")
+    # TODO : Should get channel from config
+    #debugChannelID = 640834927981494276 # Test
+    debugChannelID = 648954586614202381 # Local
     channel = bot.get_channel(debugChannelID)
     await channel.send(message)
 
@@ -69,12 +61,6 @@ async def on_member_join(member):
         f"""Hi {member.name}, welcome to Supernova's discord server! 
 Please set your nickname to be your in-game character name and leave us a message in #new-arrivals and we will get back to you!"""
     )
-
-@bot.event
-async def on_ready():
-    print(f'{bot.user.name} has connected to Discord!')
-    initialise()
-    bot.loop.create_task(update_async())
 
 async def on_event_deleted_async(signupMessageID):
     snHelpers.debug_print(f"on_event_deleted_async({signupMessageID})")
@@ -150,20 +136,20 @@ async def config(ctx, *args):
     if result.error != None:
         await ctx.send(f"```{result.error}```")
     else:
-        # Always send result.value as a single formatted string
         await ctx.send(f"{result.value}")
 
 # Update Loop
 async def update_async():
     snHelpers.debug_print("update_async()")
-    interval = 30
-    print("Waiting for bot to be ready...")
+    snHelpers.debug_print("Waiting for bot to be ready...")
     nowStr = snHelpers.get_now_time_string()
+    # TODO : This could be in the config also
+    interval = 30
     await send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.")
     await bot.wait_until_ready()
     while True:
         await check_events_async()
-        await asyncio.sleep(interval)
+        await snHelpers.sleep_async(interval)
 
 async def check_events_async():
     snHelpers.debug_print("check_events_async()")
@@ -199,7 +185,7 @@ async def check_reactions_async():
             try:
                 sMessage = await signupChannel.fetch_message(event.signupMessageID)
                 for reaction in sMessage.reactions:
-                    for emoji in defaultReactionEmojis:
+                    for emoji in snEvents.manager.m_config.m_reactions.keys():
                         if reaction.emoji == emoji:
                             users = await reaction.users().flatten()
                             for user in users:
@@ -245,7 +231,7 @@ async def handle_dirty_events_async(allDirty=False):
             # Date Time
             day = event.start.day
             month = event.start.month
-            monthStr = calendar.month_abbr[month]
+            monthStr = snHelpers.get_month_as_string_abbr(month)
             hours = event.start.hour
             minutes = event.start.minute
 
@@ -254,7 +240,7 @@ async def handle_dirty_events_async(allDirty=False):
             if event.end != None:
                 endDay = event.end.day
                 endMonth = event.end.month
-                endMonthStr = calendar.month_abbr[endMonth]
+                endMonthStr = snHelpers.get_month_as_string_abbr(endMonth)
                 endHours = event.end.hour
                 endMinutes = event.end.minute
                 monthStr = ""
@@ -299,7 +285,7 @@ async def handle_dirty_events_async(allDirty=False):
                 await sMessage.edit(embed=sEmbed)
                 await sMessage.clear_reactions()
 
-            for emoji in defaultReactionEmojis:
+            for emoji in snEvents.manager.m_config.m_reactions.keys():
                 await sMessage.add_reaction(emoji)
 
             event.isDirty = False

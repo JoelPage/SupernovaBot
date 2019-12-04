@@ -2,6 +2,41 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import re as i_re
 
+def create_node(parent, name):
+    return ET.SubElement(parent, name)
+
+def create_node_if_exists(parent, name, value):
+    if value != None:
+        return create_node(parent, name)
+
+def create_and_set_node_text(parent, name, value):
+    node = ET.SubElement(parent, name)
+    node.text = f"{value}"
+
+def create_and_set_nodes_text(parent, name, values):
+    for value in values:
+        create_and_set_node_text(parent, name, value)
+
+def create_and_set_node_text_if_exists(parent, name, value):
+    if value != None:
+        create_and_set_node_text(parent, name, value)
+
+def create_and_set_node_text_int(parent, name, value):
+    valueAsInt = int(value)
+    create_and_set_node_text(parent, name, valueAsInt)
+
+def create_and_set_node_text_int_if_exists(parent, name, value):
+    if value != None:
+        create_and_set_node_text_int(parent, name, value)
+
+def create_and_set_node_text_bool(parent, name, value):
+    text = "True" if value else "False"
+    create_and_set_node_text(parent, name, text)
+
+def set_value_from_node_text(node, name, value):
+    valueNode = node.find(name)
+    value = valueNode.text
+
 # https://stackoverflow.com/questions/24813872/creating-xml-documents-with-whitespace-with-xml-etree-celementtree
 # Return a pretty-printed XML string for the Element.
 # Tried this function before but it produced strange results so I just wrote my own.

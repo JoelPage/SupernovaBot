@@ -39,7 +39,7 @@ class Command_Events(commands.Command):
 
     def execute(self, args):
         results = [f"There are {len(m_events)} events:", ""]
-        now = helpers.getNowWithOffset()
+        now = helpers.get_now_offset()
         for event in m_events:
             if event.start > now:
                 timeDelta = event.start - now
@@ -79,7 +79,7 @@ class Command_Create(commands.Command):
     def execute(self, args):
         try:
             parsedArgs = self.parseArgs(args)
-            now = helpers.getNowWithOffset()
+            now = helpers.get_now_offset()
             # Validate Start
             start = parsedArgs.start
             start_date = parsedArgs.start_date
@@ -121,7 +121,7 @@ class Command_Create(commands.Command):
                     newEvent.reminded.append(reminder.hours)
 
             signups = {}
-            for emoji in manager.m_signupEmojis:
+            for emoji in manager.m_config.m_reactions.keys():
                 signups[emoji] = []
 
             m_events.append(newEvent)
@@ -201,7 +201,7 @@ class Command_Edit(commands.Command):
             if parsedArgs.thumbnail != None:
                 foundEvent.thumbnail = parsedArgs.thumbnail
             # Time Updates            
-            now = helpers.getNowWithOffset()
+            now = helpers.get_now_offset()
             # Start
             print("Validate Start")
             start = helpers.mergeTimeWithDateBase(foundEvent.start, parsedArgs.start, parsedArgs.start_date)

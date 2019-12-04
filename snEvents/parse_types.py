@@ -8,25 +8,31 @@ import snEvents.helpers as snHelpers
 helpers = snHelpers
 
 def parse_time(string):
-    print("parse_time()")
+    snHelpers.debug_print(f"parse_time({string})")
+
     if string == None: 
+        snHelpers.debug_print("string == None")
         raise ValueError("No string provided")
 
     splitString = string.split(":")
 
     if len(splitString) != 2: 
+        snHelpers.debug_print("len(splitString) != 2")
         raise ValueError("Could not understand Hours:Minutes")
 
-    if len(splitString[0]) < 1 or len(splitString[0]) > 2: 
+    if len(splitString[0]) < 1 or len(splitString[0]) > 2:
+        snHelpers.debug_print("len(splitString[0]) < 1 or len(splitString[0]) > 2")
         raise ValueError("Invalid time please provide Hours:Minutes")
 
-    if len(splitString[1]) != 2 or len(splitString[1]) != 4:
+    if len(splitString[1]) != 2 and len(splitString[1]) != 4:
+        snHelpers.debug_print(f"len({splitString[1]}) != 2 and len({splitString[1]}) != 4")
         raise ValueError("Invalid format! HH:MM or HH:MMam")
 
     isPM = splitString[1].upper().endswith("PM")
     splitString[1] = splitString[1][:2]
 
     if len(splitString[1]) < 2:
+        snHelpers.debug_print("len(splitString[1]) < 2")
         raise ValueError("Not enough digits to represent minutes")
 
     parser = i_argparse.ArgumentParser(description="Parse Time")
@@ -37,13 +43,15 @@ def parse_time(string):
     if isPM:
         if args.hours < 12 : args.hours +=12
 
-    if args.hours < 0 or args.hours > 24: 
+    if args.hours < 0 or args.hours > 24:
+        snHelpers.debug_print("args.hours < 0 or args.hours > 24")
         raise ValueError("Hours provided was greater than 24")
 
     if args.minutes < 0 or args.minutes > 60:
+        snHelpers.debug_print("args.minutes < 0 or args.minutes > 60")
         raise ValueError("Minutes provided was greater than 60")
 
-    now = helpers.getNowWithOffset()
+    now = snHelpers.get_now_offset()
     return now.replace(hour=args.hours, minute=args.minutes, second=0, microsecond=0)
         
 def parse_date(string):
@@ -70,7 +78,7 @@ def parse_date(string):
 
     year = 1970
     if hasYear == False:
-        now = helpers.getNowWithOffset()
+        now = helpers.get_now_offset()
         gmtime = i_time.gmtime(now.timestamp())
         year = gmtime.tm_year
     else:

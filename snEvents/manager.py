@@ -8,9 +8,9 @@ import snEvents.event as snEvent
 import snEvents.helpers as snEventHelpers
 import snEvents.config as snConfig
 import snEvents.reminder as snReminder
+import xml_helpers
 # Module Aliases
 helpers = snEventHelpers
-xml_helpers = snEventHelpers.xml_helpers
 datetime = pyDateTime.datetime
 timedelta = pyDateTime.timedelta
 # Class Aliases
@@ -81,8 +81,15 @@ def create_config_from_tree(treeRoot):
 def create_events_from_tree(root):
     global m_events
     m_events.clear()
+    # Events Node
     for events in root.findall("events"):
+        # Event Node
         for event in events.findall("event"):
+            # Create new event, call deserialise, pass node.
+            newEvent = Event("Awaiting Deserialisation", helpers.get_now_offset())
+            newEvent.deserialise(event)
+
+            # Code bellow needs to be moved into deserialise function
             eventName = event.find("name").text
             id = event.find("id").text
             start = datetime.fromtimestamp(int(event.find("start").text))
@@ -193,7 +200,7 @@ def add_config_to_tree(root):
 
 def add_events_to_tree(root):
     for event in m_events:
-        add_event_to_tree(root, event)
+        event.serialise(root)
 
 def add_event_to_tree(root, event):
     helpers.debug_print(f"addEventsToTree({root},{event})")

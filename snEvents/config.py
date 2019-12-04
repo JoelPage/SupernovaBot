@@ -2,6 +2,7 @@ class Config():
     # Reminders
     m_reminders = []
     # Channels
+    m_debugChannel = "#debug"
     m_announcementChannel = "#raid-announcements"
     m_signupChannel = "#raid-signups"
     m_logsChannel = "#signups-logs"
@@ -24,9 +25,7 @@ class Config():
         "https://i.imgur.com/cahcbdw.png", # Saturday
         "https://i.imgur.com/BwObwND.png" # Sunday
     ]
-
-
-
+    
     def __init__(self):
         pass
 

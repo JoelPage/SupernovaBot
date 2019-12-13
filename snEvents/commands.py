@@ -299,7 +299,7 @@ class Command_Config_Signup(commands.Command):
         # Validate Channel? Maybe do that at a higher level?
         manager.m_config.m_signupChannel = args.channel
         manager.publish()
-        return [ [ "Signup", "Signup channel set to <#{args.channel}>" ] ]
+        return [ [ "Signup", f"Signup channel set to <#{args.channel}>" ] ]
 
 class Command_Config_Logs(commands.Command):
     def __init__(self):

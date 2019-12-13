@@ -45,7 +45,7 @@ async def send_debug_message_async(message):
     try:
         channel = get_channel(debugChannelID)
         await channel.send(message)
-    except discord.errors.NotFound:
+    except Exception:
         pass
 
 async def post_announcement_message_async(message):
@@ -57,7 +57,7 @@ async def post_announcement_message_async(message):
     try:
         channel = get_channel(announcementChannelID)
         await channel.send(message)
-    except discord.errors.NotFound:
+    except Exception:
         pass
 
 async def post_log_message_async(message):
@@ -70,7 +70,7 @@ async def post_log_message_async(message):
         channel = get_channel(logsChannelID)
         embed = discord.Embed(title="Signup Log", description=message)
         await channel.send(embed=embed)
-    except discord.errors.NotFound:
+    except Exception:
         pass
 
 # Callbacks
@@ -87,7 +87,7 @@ async def on_event_deleted_async(signupMessageID):
             signupChannel = get_channel(snEvents.config.m_signupChannel)
             message = await signupChannel.fetch_message(signupMessageID)
             await message.delete()
-        except discord.errors.NotFound:
+        except Exception:
             pass
 
 # Commands
@@ -223,7 +223,7 @@ async def check_reactions_async():
                                         snHelpers.debug_print(reactionStr)
                                         reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
                                         event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
-    except discord.errors.NotFound:
+    except Exception:
         await send_debug_message_async("check_Reactions_async() Discord - NotFound")
 
     if reactionsLogBuffer != "":
@@ -299,19 +299,19 @@ async def handle_dirty_events_async(force=False):
         if force == True or hasChanges == True: 
             snEvents.manager.publish()
 
-    except discord.errors.NotFound:
+    except Exception:
         await send_debug_message_async(f"Discord error not found. Check channel ids in config.")
 
 def get_channel(id):
     channel = bot.get_channel(id)
     if channel == None:
         print(f"get_channel({id}) == None")
-        raise discord.errors.NotFound
+        raise Exception(f"Channel with id {id} not found.")
     return channel
 
 async def fetch_message_async(channel, id):
     message = await channel.fetch_message(id)
     if message == None:
         print(f"fetch_message_async({id}) == None")
-        raise discord.errors.NotFound
+        raise Exception(f"Channel with id {id} not found.")
     return message

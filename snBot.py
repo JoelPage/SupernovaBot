@@ -297,12 +297,12 @@ def get_channel(id):
     channel = bot.get_channel(id)
     if channel == None:
         print(f"get_channel({id}) == None")
-        raise discord.error.NotFound
+        raise discord.errors.NotFound
     return channel
 
 async def fetch_message_async(channel, id):
     message = await channel.fetch_message(id)
     if message == None:
         print(f"fetch_message_async({id}) == None")
-        raise discord.error.NotFound
+        raise discord.errors.NotFound
     return message

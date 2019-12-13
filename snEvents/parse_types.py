@@ -111,7 +111,7 @@ def parse_channel(string):
     try:
         if string.startswith('<#') and string.endswith('>'):
             print(string[2:len(string)-1])
-            return string[2:len(string)-1]
+            return int(string[2:len(string)-1])
         else:
             raise ValueError
     except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse channel")    

@@ -1,20 +1,20 @@
+print("snEvents/helpers.py")
 # Python
 import os as pyOs
 import calendar as pyCalendar
-import time
+import time as pyTime
 import datetime as pyDatetime
 import asyncio as pyAsyncio
 from dotenv import load_dotenv
-# General
+# Generic 
 import threading_helpers
-# Supernova Events
-import snEvents.manager as snManager
+# Config
+import snEvents.config as snConfig
 # Aliases
-manager = snManager
 datetime = pyDatetime.datetime
 timedelta = pyDatetime.timedelta
 # Variables
-getTimeInMilliseconds = lambda: int(round(time.time() * 1000))
+getTimeInMilliseconds = lambda: int(round(pyTime.time() * 1000))
 # Delegates
 def delegate1(a):
     print(f"delegate1({a})")
@@ -39,7 +39,7 @@ def get_discord_bot_token():
     return pyOs.getenv('DISCORD_TOKEN')
 
 def get_now_offset():
-    offsetHours = manager.m_config.m_utcOffset
+    offsetHours = snConfig.m_config.m_utcOffset
     utcnow = datetime.utcnow()
     offsetDelta = timedelta(hours=offsetHours)
     return utcnow + offsetDelta
@@ -47,14 +47,14 @@ def get_now_offset():
 def merge_time_with_date_base(base,t,d):
     debug_print(f"merge_time_with_date_base({base},{t},{d})")
     if t != None and d != None:
-        gmStart = time.gmtime(t.timestamp())
+        gmStart = pyTime.gmtime(t.timestamp())
         return d.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
     elif base != None:
         if t != None and d == None:
-            gmStart = time.gmtime(t.timestamp())
+            gmStart = pyTime.gmtime(t.timestamp())
             return base.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
         elif t == None and d != None:
-            gmStart = time.gmtime(base.timestamp())
+            gmStart = pyTime.gmtime(base.timestamp())
             return d.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
         else:
             return base
@@ -95,7 +95,7 @@ def time_delta_to_string(td):
     return timeStr
 
 def get_now_time_string():
-    gmTimeNow = time.gmtime(pyDatetime.datetime.now().timestamp())
+    gmTimeNow = pyTime.gmtime(pyDatetime.datetime.now().timestamp())
     return f"{gmTimeNow.tm_hour:02d}:{gmTimeNow.tm_min:02d}"
 
 

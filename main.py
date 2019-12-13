@@ -1,13 +1,15 @@
 # Supernova Bot
+print("main.py")
 import snBot
 
 def main():
 	# offline mode could be an executable parameter instead of hard coded
 	offlineMode = False
 	if offlineMode == True:
-		# Offline mode does not work yet.
 		print("Offline Mode")
-		snBot.run_offline()
+		progress = True
+		while progress:
+			snBot.run_offline()
 	else:
 		print("Online Mode")
 		snBot.run_online()

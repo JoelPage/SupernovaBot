@@ -1,3 +1,4 @@
+print("snCommands/commands.py")
 import snCommands.command as command
 import snCommands.manager as manager
 

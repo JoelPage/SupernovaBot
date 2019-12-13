@@ -1,16 +1,28 @@
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
-import re as i_re
+print("xml_helpers.py")
+# Python
+import datetime as pyDatetime
+import xml.etree.ElementTree as pyElementTree
+from xml.dom import minidom as pyMinidom
+import re as pyRe
+import sys as pySys
+
+def get_node(parent, name):
+    if parent != None:
+        return parent.find(name)
+
+def get_nodes(parent, name):
+    if parent != None:
+        return parent.findall(name)
 
 def create_node(parent, name):
-    return ET.SubElement(parent, name)
+    return pyElementTree.SubElement(parent, name)
 
 def create_node_if_exists(parent, name, value):
     if value != None:
         return create_node(parent, name)
 
 def create_and_set_node_text(parent, name, value):
-    node = ET.SubElement(parent, name)
+    node = pyElementTree.SubElement(parent, name)
     node.text = f"{value}"
 
 def create_and_set_nodes_text(parent, name, values):
@@ -33,9 +45,83 @@ def create_and_set_node_text_bool(parent, name, value):
     text = "True" if value else "False"
     create_and_set_node_text(parent, name, text)
 
-def set_value_from_node_text(node, name, value):
+def create_and_set_node_text_float(parent, name, value):
+    valueAsFloat = float(value)
+    create_and_set_node_text(parent, name, valueAsFloat)
+
+def get_value_text(node, name): 
     valueNode = node.find(name)
-    value = valueNode.text
+    if valueNode != None:
+        return valueNode.text
+
+def get_value_int(node, name):
+    valueNode = node.find(name)
+    print(valueNode)
+    if valueNode != None:
+        valueAsStr = valueNode.text
+        return int(valueAsStr)
+
+def get_value_float(node, name):
+    valueNode = node.find(name)
+    if valueNode != None:
+        valueAsStr = valueNode.text
+        return float(valueAsStr)
+
+def get_value_datetime(node, name):
+    valueNode = node.find(name)
+    if valueNode != None:
+        valueAsStr = valueNode.text
+        valueAsInt = int(valueAsStr)
+        return pyDatetime.datetime.fromtimestamp(valueAsInt)
+
+def get_value_bool(node, name):
+    valueNode = node.find(name)
+    if valueNode != None:
+        valueAsStr = valueNode.text
+        return True if valueAsStr == "True" else False
+
+def get_values_float(node, name, values):
+    if node != None:
+        for valueNode in node.findall("reminder"):
+            valueAsStr = valueNode.text
+            valueAsFloat = float(valueAsStr)
+            values.append(valueAsFloat)
+
+def set_attrib_text(node, name, value):
+    node.set(name, f"{value}")
+
+def set_attrib_text_if_exists(node, name, value):
+    if node != None:
+        set_attrib_text(node, name, f"{value}")
+
+def set_attrib_text_int_bytes(node, name, value):
+    valueAsBytes = value.encode('utf8')
+    valueAsInt = int.from_bytes(valueAsBytes, pySys.byteorder)
+    set_attrib_text(node, name, valueAsInt)
+
+def get_attrib_text(node, name):
+    if name in node.attrib.keys():
+        return node.attrib[name]
+     
+def get_attrib_float(node, name):
+    valueAsStr = get_attrib_text(node, name)
+    if valueAsStr != None:
+        return float(valueAsStr)
+
+def get_attrib_int(node, name):
+    valueAsStr = get_attrib_text(node, name)
+    if valueAsStr != None:
+        return int(valueAsStr)
+
+def get_attrib_bytes(node, name, numBytes):
+    valueAsInt = get_attrib_int(node, name)
+    if valueAsInt != None:
+        return valueAsInt.to_bytes(numBytes, pySys.byteorder)
+        
+def get_attrib_unicode(node, name):
+    valueAsBytes = get_attrib_bytes(node, name, 3)
+    if valueAsBytes != None:
+        return valueAsBytes.decode('utf-8')
 
 # https://stackoverflow.com/questions/24813872/creating-xml-documents-with-whitespace-with-xml-etree-celementtree
 # Return a pretty-printed XML string for the Element.
@@ -43,7 +129,7 @@ def set_value_from_node_text(node, name, value):
 def prettify_custom(tree):
     # Read out tree as bytes
     encoding = 'utf-8'
-    treeAsBytes = ET.tostring(tree, encoding)
+    treeAsBytes = pyElementTree.tostring(tree, encoding)
     # Convert to string
     treeAsString = str(treeAsBytes, encoding)
     # Remove new lines
@@ -53,7 +139,7 @@ def prettify_custom(tree):
     # WARNING : This is a bit janky, if someone has a name that includes triangle braces
     # then this logic could break entirely.
     # It also fails when trying to add attributes
-    split = i_re.findall(r"<(.*?)\>", treeAsString)
+    split = pyRe.findall(r"<(.*?)\>", treeAsString)
 
     # Variables used for producing correct indentation.
     start = 0               # The index into the string we will start searching.
@@ -98,7 +184,7 @@ def prettify_custom(tree):
 def prettify_minidom(tree):
     # Read out tree as bytes
     encoding = 'utf-8'
-    treeAsBytes = ET.tostring(tree, encoding)
+    treeAsBytes = pyElementTree.tostring(tree, encoding)
     # Convert to string
     treeAsString = str(treeAsBytes, encoding)
     # Remove new lines
@@ -108,7 +194,7 @@ def prettify_minidom(tree):
     treeAsString = "".join(splitTree)
 
     INDENT = "    "
-    reparsed = minidom.parseString(treeAsString)
+    reparsed = pyMinidom.parseString(treeAsString)
     return reparsed.toprettyxml(indent=INDENT)
 
 # Write xml string to file
@@ -121,35 +207,6 @@ def fileWrite(data, fileName):
 # Read tree from xml file
 def fileRead(fileName):
     file = open(fileName, "r")
-    tree = ET.parse(file)
+    tree = pyElementTree.parse(file)
     file.close()
     return tree
-    
-# Create Dummy Event
-def createDummyEvent(fileName):
-    data = ET.Element('data')
-    events = ET.SubElement(data, 'events')
-    event0 = ET.SubElement(events, 'event')
-    event0Name = ET.SubElement(event0, 'name')
-    event0Name.text = 'event0abc'
-    event1 = ET.SubElement(events, 'event')
-    event1Name = ET.SubElement(event1, 'name')
-    event1Name.text = 'event1abc'
-    
-    # Write 
-    fileWrite(data, fileName)
-
-#fileName = "events.xml"
-#
-#createDummyEvent(fileName)
-#
-# Print all data in Events.xml
-#tree = fileRead(fileName)
-#root = tree.getroot()
-#
-#print('\nAll attributes:')
-#for elem in root:
-#    print(elem.attrib)
-#    for subelem in elem:
-#        print(subelem.attrib)
-#

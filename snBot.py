@@ -1,27 +1,33 @@
+print("snBot.py")
 # Discord
 import discord
 from discord.ext import commands as commands
+# Input
+import input
 # Supernova Commands
 import snCommands.commands as snCommands
 # Supernova Events
 import snEvents.events as snEvents
-import snEvents.helpers as snHelpers
+# Aliases
+snHelpers = snEvents.helpers
 
 # Setup
 bot = commands.Bot(command_prefix='!')
 
-# Run
 def run_offline():
-    snHelpers.debug_print("Bot running in offline mode!")
-    # TODO : Create async task 
-    #while True:
-        #snHelpers.debug_print("Offline bot async loop.")
-        #snHelpers.sleep_async(30)
+    command = input.gatherInput()
+    splitCommand = command.split(' ')
+    result = snCommands.executeCommand(splitCommand[0], splitCommand[1:])
+    for v1 in result.value:
+        for v2 in v1:
+            print(v2)
 
 def run_online():
-    snHelpers.debug_print("Connecting bot to discord...")
+    snHelpers.debug_print("Retrieving token!")
     token = snHelpers.get_discord_bot_token()
+    snHelpers.debug_print("Connecting bot to discord...")
     bot.run(token)
+    snHelpers.debug_print("Finished running bot!")
     
 # Callbacks
 @bot.event
@@ -32,41 +38,43 @@ async def on_ready():
 # Message Posting
 async def send_debug_message_async(message):
     snHelpers.debug_print(f"send_debug_message_async({message})")
-    # TODO : Should get channel from config
-    #debugChannelID = 640834927981494276 # Test
-    debugChannelID = 648954586614202381 # Local
+    debugChannelID = snEvents.config.m_debugChannel
+    if debugChannelID == 0:
+        snHelpers.debug_print("Debug channel is not set!")
+        return
     channel = bot.get_channel(debugChannelID)
     await channel.send(message)
 
 async def post_announcement_message_async(message):
-    announcementChannelID = int(snEvents.config.m_announcementChannel)
+    snHelpers.debug_print(f"post_announcement_message_async({message})")
+    announcementChannelID = snEvents.config.m_announcementChannel
+    if announcementChannelID == 0:
+        snHelpers.debug_print("Announcements channel is not set!")
+        return
     channel = bot.get_channel(announcementChannelID)
     await channel.send(message)
 
-async def postSignupMessageAsync(message):
-    signupChannelID = int(snEvents.config.m_signupChannel)
-    channel = bot.get_channel(signupChannelID)
-    await channel.send(message)
-
 async def post_log_message_async(message):
-    logsChannelID = int(snEvents.config.m_logsChannel)
+    snHelpers.debug_print(f"post_log_message_async({message})")
+    logsChannelID = snEvents.config.m_logsChannel
+    if logsChannelID == 0:
+        snHelpers.debug_print("Logs channel is not set!")
+        return
     channel = bot.get_channel(logsChannelID)
-    await channel.send(message)
+    embed = discord.Embed(title="Signup Log", description=message)
+    await channel.send(embed=embed)
 
 # Callbacks
 @bot.event
 async def on_member_join(member):
     await member.create_dm()
-    await member.dm_channel.send(
-        f"""Hi {member.name}, welcome to Supernova's discord server! 
-Please set your nickname to be your in-game character name and leave us a message in #new-arrivals and we will get back to you!"""
-    )
+    await member.dm_channel.send(f"Hi {member.name}, welcome to Supernova's discord server!\n{snEvents.config.m_welcomeMessage}")
 
 async def on_event_deleted_async(signupMessageID):
     snHelpers.debug_print(f"on_event_deleted_async({signupMessageID})")
 
     if signupMessageID != None:
-        signupChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
+        signupChannel = bot.get_channel(snEvents.config.m_signupChannel)
         try:
             sMessage = await signupChannel.fetch_message(signupMessageID)
             await sMessage.delete()
@@ -76,8 +84,10 @@ async def on_event_deleted_async(signupMessageID):
 # Commands
 @bot.command()
 @commands.has_role('Officer')
-async def emoji(ctx, *args):
-    print(f"{args}")
+async def publish(ctx, *args):
+    print(f"Recieved Discord Command publish({args})")
+    snEvents.manager.publish()
+    await send_debug_message_async("Publish complete")
 
 @bot.command()
 @commands.has_role('Officer')
@@ -90,7 +100,8 @@ async def create(ctx, *args):
         await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
 
     await check_events_async()
-    await handle_dirty_events_async(allDirty=True)
+    await handle_dirty_events_async(force=True)
+    snHelpers.debug_print("Command executed")
 
 @bot.command()
 @commands.has_role('Officer')
@@ -103,6 +114,7 @@ async def skip(ctx, *args):
         await ctx.send(result.value)
 
     await check_events_async()
+    snHelpers.debug_print("Command executed")
 
 @bot.command()
 @commands.has_role('Officer')
@@ -115,6 +127,7 @@ async def events(ctx, *args):
         embed = discord.Embed(title="Upcoming Events", description=result.value[1])
         embed.set_footer(text=result.value[0])
         await ctx.send(embed=embed)
+    snHelpers.debug_print("Command executed")
 
 @bot.command()
 @commands.has_role('Officer')
@@ -127,16 +140,21 @@ async def edit(ctx, *args):
         await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
 
     await handle_dirty_events_async()
+    snHelpers.debug_print("Command executed")
 
 @bot.command()
 @commands.has_role('Officer')
 async def config(ctx, *args):
     snHelpers.debug_print(f"Recieved Discord Command - config({args})")
     result = snCommands.executeCommand("CONFIG", args)
-    if result.error != None:
+    if result.error:
         await ctx.send(f"```{result.error}```")
     else:
-        await ctx.send(f"{result.value}")
+        embed = discord.Embed(title="Configuration")
+        for fieldData in result.value:
+            embed.add_field(name=fieldData[0], value=fieldData[1], inline=False)
+        await ctx.send(embed=embed)
+    snHelpers.debug_print("Command executed")
 
 # Update Loop
 async def update_async():
@@ -179,116 +197,112 @@ async def check_events_async():
 async def check_reactions_async():
     snHelpers.debug_print("check_reactions_async()")
     reactionsLogBuffer = ""
-    for event in snEvents.events:
-        if event.signupMessageID != None:
-            signupChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
-            try:
-                sMessage = await signupChannel.fetch_message(event.signupMessageID)
+    try:        
+        for event in snEvents.events:
+            if event.signupMessageID != None:
+                signupChannel = get_channel(snEvents.config.m_signupChannel)
+                sMessage = await fetch_message_async(signupChannel, event.signupMessageID)
                 for reaction in sMessage.reactions:
                     for emoji in snEvents.manager.m_config.m_reactions.keys():
                         if reaction.emoji == emoji:
                             users = await reaction.users().flatten()
                             for user in users:
                                 if user != bot.user:
-                                    event.isDirty = True
-                                    reactionStr = f"@{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
-                                    snHelpers.debug_print(reactionStr)
-                                    reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
-                                    event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
-
-            except discord.errors.NotFound:
-                pass
+                                    if event.signups[user.id] != snEvents.config.m_reactions[reaction.emoji]:
+                                        event.isDirty = True
+                                        reactionStr = f"@{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
+                                        snHelpers.debug_print(reactionStr)
+                                        reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
+                                        event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
+    except discord.errors.NotFound:
+        await send_debug_message_async("check_Reactions_async() Discord - NotFound")
 
     if reactionsLogBuffer != "":
         await post_log_message_async(reactionsLogBuffer)
 
-async def handle_dirty_events_async(allDirty=False):
-    snHelpers.debug_print(f"handle_dirty_events_async({allDirty})")
-    sChannel = bot.get_channel(int(snEvents.config.m_signupChannel))
+async def handle_dirty_events_async(force=False):
+    snHelpers.debug_print(f"handle_dirty_events_async({force})")
+    try:
+        channel = get_channel(snEvents.get_signup_channel_id())
 
-    # allDirty override, flush out all events and recreate them
-    if allDirty == True:
-        await sChannel.purge(limit=None, check=lambda msg: not msg.pinned)
+        # force override, flush out all events and recreate them
+        if force == True:
+            await channel.purge(limit=None, check=lambda msg: not msg.pinned)
 
-    eventsList = None
-    if snEvents.config.m_isAscendingSort == True:
-        eventsList = reversed(snEvents.events)
-    else:
-        eventsList = snEvents.events
+        # Create Emoji Dictionary to store users
+        splitSignups = {}
+        for value in snEvents.config.m_reactions.values():
+            splitSignups[value] = []
 
-    eventWasDirty = False
-    for event in eventsList:
-        if event.isDirty == True or allDirty == True:    
-            eventWasDirty = True
-            print(f"{event.name} is dirty!")
-            splitSignups = {}
-            for key, value in snEvents.config.m_reactions.items():
-                splitSignups[value] = []
+        hasChanges = False
+        eventsList = snEvents.get_events()
+        for event in eventsList:
+            if event.isDirty == True or force == True:    
+                hasChanges = True
 
-            for key, value in event.signups.items():
-                splitSignups[value].append(key) 
+                description = event.get_embed_description()
+                embed = discord.Embed(title=f"{event.name}", description=description)
+                if event.thumbnail != None:
+                    embed.set_thumbnail(url=event.thumbnail)
+                if event.image != None:
+                    embed.set_image(url=event.image)
+                embed.set_footer(text=f"ID:{event.id}")
 
-            # Date Time
-            day = event.start.day
-            month = event.start.month
-            monthStr = snHelpers.get_month_as_string_abbr(month)
-            hours = event.start.hour
-            minutes = event.start.minute
+                # Clear Emoji Users Dictionary 
+                for value in splitSignups.values():
+                    value.clear()
 
-            sDateTime = ""
-            sDateTime = f"<{monthStr} {day}, {hours:02d}:{minutes:02d}"
-            if event.end != None:
-                endDay = event.end.day
-                endMonth = event.end.month
-                endMonthStr = snHelpers.get_month_as_string_abbr(endMonth)
-                endHours = event.end.hour
-                endMinutes = event.end.minute
-                monthStr = ""
-                if event.end.day != event.start.day or event.end.month != event.start.month:
-                    monthStr = f"{endMonthStr} {endDay}, "
-                sDateTime = f"{sDateTime} - {monthStr}{endHours:02d}:{endMinutes:02d}>"
-            else:
-                sDateTime = f"{sDateTime}>"
-            sDateTime = f"```xl\n{sDateTime}```"
+                # Event stores Emoji for each user.
+                # We need Users for each emoji
+                # User, Emoji
+                for key, value in event.signups.items():
+                    splitSignups[value].append(key)
 
-            # Description
-            sDescription = f"{sDateTime}\n{event.description}"
+                # Add a field for each emoji
+                # Emoji, Users
+                for key, value in splitSignups.items():
+                    emoji = snEvents.config.findReaction(key)
+                    fName = f'**{emoji} {key} {len(value)}**'
 
-            sEmbed = discord.Embed(title=f"{event.name}", description=sDescription)
-            if event.thumbnail:
-                sEmbed.set_thumbnail(url=event.thumbnail)
-            if event.image:
-                sEmbed.set_image(url=event.image)            
-            sEmbed.set_footer(text=f"ID:{event.id}")
-            
-            # Edit Roster Field
-            for key, value in splitSignups.items():
-                fName = f'**{key} {len(value)}\n========**'
+                    fValue = ""
+                    for userId in value:
+                        fValue = f"{fValue}<@{userId}>\n"
+                    if fValue == "":
+                        fValue = "Nobody"
+                    embed.add_field(name=fName, value=fValue, inline=True)
+
+                # TODO : Build array of embeds - Then we can delay purge to outside the loop
                 
-                fValue = ""
-                for userId in value:
-                    fValue = f"{fValue}<@{userId}>\n"
-                if fValue == "":
-                    fValue = "Nobody"
-                sEmbed.add_field(name=fName, value=fValue)
+                message = None
+                if event.signupMessageID == None or force == True:
+                    message = await channel.send(embed=embed)
+                    event.signupMessageID = message.id
+                else:
+                    message = await fetch_message_async(channel, event.signupMessageID)
+                    await message.edit(embed=embed)
+                    await message.clear_reactions()
 
-            # Edit Signup Embed
-            sDescription = f"{sDateTime}{event.description}"
+                for emoji in snEvents.config.m_reactions.keys():
+                    await message.add_reaction(emoji)
 
-            # Build array of embeds - Then we can delay purge to outside the loop
-            sMessage = None
-            if event.signupMessageID == None or allDirty == True:
-                sMessage = await sChannel.send(embed=sEmbed)
-                event.signupMessageID = sMessage.id
-            else:
-                sMessage = await sChannel.fetch_message(event.signupMessageID)
-                await sMessage.edit(embed=sEmbed)
-                await sMessage.clear_reactions()
+                event.isDirty = False
 
-            for emoji in snEvents.manager.m_config.m_reactions.keys():
-                await sMessage.add_reaction(emoji)
+        if force == True or hasChanges == True: 
+            snEvents.manager.publish()
 
-            event.isDirty = False
+    except discord.errors.NotFound:
+        await send_debug_message_async(f"Discord error not found. Check channel ids in config.")
 
-    if allDirty == True or eventWasDirty == True: 
-        snEvents.manager.publish()
+def get_channel(id):
+    channel = bot.get_channel(id)
+    if channel == None:
+        print(f"get_channel({id}) == None")
+        raise discord.error.NotFound
+    return channel
+
+async def fetch_message_async(channel, id):
+    message = await channel.fetch_message(id)
+    if message == None:
+        print(f"fetch_message_async({id}) == None")
+        raise discord.error.NotFound
+    return message

@@ -1,10 +1,8 @@
-# Serialisation
-import xml.etree.ElementTree as tree
-# Unique Identifier
-import snEvents.uid as uid
-# XML Helpers
+print("snEvents/event.py")
+# Generic
 import xml_helpers as snXMLHelpers
-# General Helpers
+# Events
+import snEvents.uid as snUID
 import snEvents.helpers as snHelpers
 
 class Event():
@@ -23,7 +21,7 @@ class Event():
                  signups=None):
 
         if id == None:
-            self.id = uid.get()
+            self.id = snUID.get()
         else: 
             self.id = id
 
@@ -63,7 +61,8 @@ class Event():
         snXMLHelpers.create_and_set_node_text(eventNode, 'name', self.name)
         snXMLHelpers.create_and_set_node_text(eventNode, 'id', self.id)
         snXMLHelpers.create_and_set_node_text_int(eventNode, 'start', self.start.timestamp())
-        snXMLHelpers.create_and_set_node_text_int_if_exists(eventNode, 'end', self.end.timestamp())
+        if self.end != None:
+            snXMLHelpers.create_and_set_node_text_int(eventNode, 'end', self.end.timestamp())
         snXMLHelpers.create_and_set_node_text_bool(eventNode, 'started', self.started)
         snXMLHelpers.create_and_set_node_text_if_exists(eventNode, 'thumbnail', self.thumbnail)
         snXMLHelpers.create_and_set_node_text_if_exists(eventNode, 'image', self.image)
@@ -74,55 +73,52 @@ class Event():
         signupsNode = snXMLHelpers.create_node(eventNode, 'signups')
         for key, value in self.signups.items():
             signupNode = snXMLHelpers.create_node(signupsNode, 'signup')
-            signupNode.set("user", f"{key}")
-            signupNode.set("reaction", value)
+            snXMLHelpers.set_attrib_text(signupNode, 'user', key)
+            snXMLHelpers.set_attrib_text(signupNode, 'reaction', value)
 
     def deserialise(self, node):
-        snXMLHelpers.set_value_from_node_text(node, 'name', self.name)
-        snXMLHelpers.set_value_from_node_text(node, 'id', self.id)
-        # Start
-        snXMLHelpers.set_value_from_node_datetime
-        startAsString = node.find("start").text
-        startAsInt = int(startAsString)
-        self.start = snHelpers.datetime.fromtimestamp(startAsInt)
-        # End
-        endNode = node.find("end")
-        if endNode != None:
-            endAsString = endNode.text
-            endAsInt = int(endAsString) 
-            self.end = snHelpers.datetime.fromtimestamp(endAsInt)
-        # Started
-        startedNode = node.find("started")
-        if startedNode != None:
-            startedAsString = startedNode.text
-            self.started = True if startedAsString == "True" else False
-        # Thumbnail 
-        thumbnail = None
-        thumbnailNode = event.find("thumbnail")
-        if thumbnailNode != None:
-            thumbnail = thumbnailNode.text
-        image = None
-        imageNode = event.find("image")
-        if imageNode != None:
-            image = imageNode.text
-        description = None
-        descriptionNode = event.find("description")
-        if descriptionNode != None:
-            description = descriptionNode.text
-        reminded = []
-        remindedNode = event.find("reminded")
-        if remindedNode != None:
-            for reminder in remindedNode.findall("reminder"):
-                reminded.append(float(reminder.text))
-        signupMessageID = None
-        signupMessageIDNode = event.find("signupmessageid")
-        if signupMessageIDNode != None:
-            signupMessageID = int(signupMessageIDNode.text)
-        signups = {}
-        signupsNode = event.find("signups")
-        if signupsNode != None:
-            signupNodes = signupsNode.findall("signup")
+        self.name = snXMLHelpers.get_value_text(node, 'name')
+        self.id = snXMLHelpers.get_value_text(node, 'id')
+        self.start = snXMLHelpers.get_value_datetime(node, 'start')
+        self.end = snXMLHelpers.get_value_datetime(node, 'end')
+        self.started = snXMLHelpers.get_value_bool(node, 'started')
+        self.thumbnail = snXMLHelpers.get_value_text(node, 'thumbnail')
+        self.image = snXMLHelpers.get_value_text(node, 'image')
+        self.description = snXMLHelpers.get_value_text(node, 'description')
+        remindedNode = snXMLHelpers.get_node(node, 'reminded')
+        snXMLHelpers.get_values_float(remindedNode, 'reminder', self.reminded)
+        self.signupMessageID = snXMLHelpers.get_value_int(node, 'signupmessageid')
+        signupsNode = snXMLHelpers.get_node(node, 'signups')
+        signupNodes = snXMLHelpers.get_nodes(signupsNode, 'signup')
+        if signupNodes  != None:
             for signupNode in signupNodes:
-                userId = int(signupNode.attrib["user"])
-                reaction = signupNode.attrib["reaction"]
-                signups[userId] = reaction
+                userId = snXMLHelpers.get_attrib_int(signupNode, 'user')
+                print(userId)
+                reaction = snXMLHelpers.get_attrib_text(signupNode, 'reaction')
+                print(reaction)
+                self.signups[userId] = reaction
+
+    def get_embed_description(self):
+        day = self.start.day
+        month = self.start.month
+        monthStr = snHelpers.get_month_as_string_abbr(month)
+        hours = self.start.hour
+        minutes = self.start.minute
+
+        sDateTime = ""
+        sDateTime = f"<{monthStr} {day}, {hours:02d}:{minutes:02d}"
+        if self.end != None:
+            endDay = self.end.day
+            endMonth = self.end.month
+            endMonthStr = snHelpers.get_month_as_string_abbr(endMonth)
+            endHours = self.end.hour
+            endMinutes = self.end.minute
+            monthStr = ""
+            if self.end.day != self.start.day or self.end.month != self.start.month:
+                monthStr = f"{endMonthStr} {endDay}, "
+            sDateTime = f"{sDateTime} - {monthStr}{endHours:02d}:{endMinutes:02d}>"
+        else:
+            sDateTime = f"{sDateTime}>"
+        sDateTime = f"```xl\n{sDateTime}```"
+
+        return f"{sDateTime}\n{self.description}"

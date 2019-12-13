@@ -1,3 +1,4 @@
+print("snEvents/manager.py")
 # Python Includes
 import sys
 import time
@@ -14,12 +15,13 @@ helpers = snEventHelpers
 datetime = pyDateTime.datetime
 timedelta = pyDateTime.timedelta
 # Class Aliases
+print("Attempting to set Event Alias")
 Event = snEvent.Event
+print(f"Event alias set to {Event}")
 Reminder = snReminder.Reminder
 # Could we use a Dictionary ?
 # Maybe if looping gets slow
 m_xmlFilePath = "events.xml"
-m_config = snConfig.Config()
 m_events = []
 m_exit = False
 m_onEventDeletedAsync = helpers.delegate1
@@ -28,112 +30,34 @@ m_removedEvents = []
 
 def initialise():
     helpers.debug_print("initialise()")
+
+    global m_config
+    m_config = snConfig.m_config
+
     deserialise()
 
 def deserialise():
     helpers.debug_print("deserialise()")
-    eventsTree = xml_helpers.fileRead(m_xmlFilePath)
-    create_config_from_tree(eventsTree.getroot())
-    create_events_from_tree(eventsTree.getroot())
+    try:
+        eventsTree = xml_helpers.fileRead(m_xmlFilePath)
+        create_config_from_tree(eventsTree.getroot())
+        create_events_from_tree(eventsTree.getroot())
+    except Exception as e:
+        helpers.debug_print("Failed to read xml, recreating with defaults")
+        publish()
 
-def create_config_from_tree(treeRoot):
-    helpers.debug_print(f"create_config_from_tree({treeRoot})")
-    configNode = treeRoot.find("config")
-    # Channels
-    signupsNode = configNode.find("signups")
-    if signupsNode != None:
-        m_config.m_signupChannel = signupsNode.text
-        
-    announcementsNode = configNode.find("announcements")
-    if announcementsNode != None:
-        m_config.m_announcementChannel = announcementsNode.text
-        
-    logsNode = configNode.find('logs')
-    if logsNode != None:
-        m_config.m_logsChannel = logsNode.text
-    # Sort Order
-    sortOrderNode = configNode.find('sortorder')
-    if sortOrderNode != None:
-        m_config.m_isAscendingSort = True if sortOrderNode.text == "Ascending" else False
-    # Time
-    utcOffsetNode = configNode.find("utcoffset")
-    m_config.m_utcOffset = float(utcOffsetNode.text)
-    # Reminders
-    m_config.m_reminders.clear()
-    remindersNode = configNode.find("reminders")
-    if remindersNode != None:
-        reminderNodes = remindersNode.findall("reminder")
-        for reminderNode in reminderNodes:
-            hours = float(reminderNode.attrib["hours"])
-            m_config.m_reminders.append(Reminder(hours=hours))
-    # Reactions
-    m_config.m_reactions.clear()
-    reactionsNode = configNode.find("reactions")
-    if reactionsNode != None:
-        reactionNodes = reactionsNode.findall("reaction")
-        for reactionNode in reactionNodes:
-            emojiAsInt = int(reactionNode.attrib["emoji"])
-            emojiAsBytes = emojiAsInt.to_bytes(3, sys.byteorder)
-            emojiAsUnicode = emojiAsBytes.decode("utf-8")
-            value = reactionNode.attrib["value"]
-            m_config.m_reactions[emojiAsUnicode] = value
+def create_config_from_tree(root):
+    helpers.debug_print(f"create_config_from_tree({root})")
+    m_config.deserialise(root)
 
 def create_events_from_tree(root):
     global m_events
     m_events.clear()
-    # Events Node
-    for events in root.findall("events"):
-        # Event Node
-        for event in events.findall("event"):
-            # Create new event, call deserialise, pass node.
+    for eventsNode in root.findall("events"):
+        for eventNode in eventsNode.findall("event"):
             newEvent = Event("Awaiting Deserialisation", helpers.get_now_offset())
-            newEvent.deserialise(event)
-
-            # Code bellow needs to be moved into deserialise function
-            eventName = event.find("name").text
-            id = event.find("id").text
-            start = datetime.fromtimestamp(int(event.find("start").text))
-            end = None
-            endNode = event.find("end")
-            if endNode != None:
-                end = datetime.fromtimestamp(int(endNode.text))
-            started = False
-            startedNode = event.find("started")
-            if startedNode != None:
-                started = True if startedNode.text == "True" else False
-            thumbnail = None
-            thumbnailNode = event.find("thumbnail")
-            if thumbnailNode != None:
-                thumbnail = thumbnailNode.text
-            image = None
-            imageNode = event.find("image")
-            if imageNode != None:
-                image = imageNode.text
-            description = None
-            descriptionNode = event.find("description")
-            if descriptionNode != None:
-                description = descriptionNode.text
-            reminded = []
-            remindedNode = event.find("reminded")
-            if remindedNode != None:
-                for reminder in remindedNode.findall("reminder"):
-                    reminded.append(float(reminder.text))
-            signupMessageID = None
-            signupMessageIDNode = event.find("signupmessageid")
-            if signupMessageIDNode != None:
-                signupMessageID = int(signupMessageIDNode.text)
-            signups = {}
-            signupsNode = event.find("signups")
-            if signupsNode != None:
-                signupNodes = signupsNode.findall("signup")
-                for signupNode in signupNodes:
-                    userId = int(signupNode.attrib["user"])
-                    reaction = signupNode.attrib["reaction"]
-                    signups[userId] = reaction
-
-            m_events.append(Event(eventName, start, id=id, end=end, started=started, 
-            description=description, image=image, thumbnail=thumbnail, reminded=reminded,
-            signupMessageID=signupMessageID, signups=signups))
+            newEvent.deserialise(eventNode)
+            m_events.append(newEvent)
 
     sort_events()
 
@@ -163,42 +87,13 @@ def create_tree():
 
 def initialise_tree():
     root = tree.Element('root')
-    tree.SubElement(root, 'config')
-    tree.SubElement(root, 'events')
     return root
 
 def add_config_to_tree(root):
-    config = root.find('config')
-    # Channels
-    announcementsNode = tree.SubElement(config, 'announcements')
-    announcementsNode.text = m_config.m_announcementChannel
-    signupsNode = tree.SubElement(config, 'signups')
-    signupsNode.text = m_config.m_signupChannel
-    logsNode = tree.SubElement(config, 'logs')
-    logsNode.text = m_config.m_logsChannel
-    # Sort Order
-    sortOrderNode = tree.SubElement(config, 'sortorder')
-    sortOrderNode.text = "Ascending" if m_config.m_isAscendingSort == True else "Descending"
-    # Time
-    utcoffsetNode = tree.SubElement(config, 'utcoffset')
-    utcoffsetNode.text = f"{m_config.m_utcOffset}"
-    # Reminders
-    remindersNode = tree.SubElement(config, 'reminders')
-    for reminder in m_config.m_reminders:
-        reminderNode = tree.SubElement(remindersNode, 'reminder')
-        reminderNode.set('hours', f"{reminder.hours}")
-        if reminder.message != None:
-            reminderNode.set('message', reminder.message)
-    # Reactions
-    reactionsNode = tree.SubElement(config, 'reactions')
-    for key, value in m_config.m_reactions.items():
-        reactionNode = tree.SubElement(reactionsNode, 'reaction')
-        emojiAsBytes = key.encode('utf8')
-        emojiAsInt = int.from_bytes(emojiAsBytes, sys.byteorder)
-        reactionNode.set('emoji', f"{emojiAsInt}")
-        reactionNode.set('value', value)
+    m_config.serialise(root)
 
 def add_events_to_tree(root):
+    tree.SubElement(root, 'events')
     for event in m_events:
         event.serialise(root)
 
@@ -331,5 +226,14 @@ def check_event_reminders():
         return reminderResults
     else:
         return None
+
+def get_events():
+    if m_config.m_isAscendingSort == True:
+        return reversed(m_events)
+    else:
+        return m_events
+
+def get_signup_channel_id():
+    return m_config.m_signupChannel
 
 initialise()

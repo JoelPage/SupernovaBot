@@ -2,6 +2,7 @@
 import argparse
 import datetime as pyDateTime
 import time
+import calendar as pyCalendar
 # Supernova Commands
 import snCommands.commands as commands
 # Supernova Events
@@ -69,7 +70,6 @@ class Command_Create(commands.Command):
         Argument("start-date", type=parse_types.parse_date, help="Set the start date. Format : DD/MM or DD/MM/YYYY"),
         Argument("end-date", type=parse_types.parse_date, help="Set the end date. Format : DD/MM or DD/MM/YYYY"),
         Argument("end", type=parse_types.parse_time, help="Set the end time. Format : HH:MM or H:MMpm"),
-        Argument("repeat", type=parse_types.parse_day, help="Set the days this event repeats. Format : 'Mon, Thu, Sun'"),
         Argument("expire", type=parse_types.parse_date, help="Set the date repeat expires. Format : DD/MM or DD/MM/YYYY"),
         Argument("description", help="Set the event description. Format : 'String in quotes'"),
         Argument("image", help="Set the event image. Format : 'String in quotes'"),
@@ -128,7 +128,7 @@ class Command_Create(commands.Command):
             manager.publish()
 
             results = [f"New event created :id: {newEvent.id}"] 
-            results.append(f'Title: "{newEvent.name}"\nStart: {newEvent.start}\nEnd: {newEvent.end}\nRepeat: {newEvent.repeat}\nDescription: "{newEvent.description}"')
+            results.append(f'Title: "{newEvent.name}"\nStart: {newEvent.start}\nEnd: {newEvent.end}\nDescription: "{newEvent.description}"')
             if newEvent.thumbnail != None:
                 results[1] = f"{results[1]}\nThumbnail: '{newEvent.thumbnail}'"
             if newEvent.image != None:
@@ -154,7 +154,7 @@ class Command_Skip(commands.Command):
     def execute(self, args):
         try:
             parsedArgs = self.parseArgs(args)
-            result = manager.removeEvent(parsedArgs.UID)
+            result = manager.remove_event(parsedArgs.UID)
             return Result(value=result)
         except Exception as e:
             return Result(error=e.args)
@@ -175,7 +175,6 @@ class Command_Edit(commands.Command):
         Argument("end", type=parse_types.parse_time, help="Set the end time. Format : HH:MM or H:MMpm"),
         Argument("start-date", type=parse_types.parse_date, help="Set the start date. Format : DD/MM or DD/MM/YYYY"),
         Argument("end-date", type=parse_types.parse_date, help="Set the end date. Format : DD/MM or DD/MM/YYYY"),
-        Argument("repeat", type=parse_types.parse_day, help="Set the days this event repeats. Format : 'Mon, Thu, Sun'"),
         Argument("expire", type=parse_types.parse_date, help="Set the date repeat expires. Format : DD/MM or DD/MM/YYYY"),
         Argument("description", help="Set the event description. Format : 'String in quotes'"),
         Argument("image", help="Set the event image. Format : 'String in quotes'"),
@@ -187,7 +186,7 @@ class Command_Edit(commands.Command):
             print("ParseArgs")
             parsedArgs = self.parseArgs(args)
             print(f"Find Event {parsedArgs.UID}")
-            foundEvent = manager.findEventByUID(parsedArgs.UID)
+            foundEvent = manager.find_event_by_id(parsedArgs.UID)
             if foundEvent == None:
                 raise Exception(f"No event found with ID {parsedArgs.UID}")
             foundEvent.isDirty = True
@@ -204,7 +203,7 @@ class Command_Edit(commands.Command):
             now = helpers.get_now_offset()
             # Start
             print("Validate Start")
-            start = helpers.mergeTimeWithDateBase(foundEvent.start, parsedArgs.start, parsedArgs.start_date)
+            start = helpers.merge_time_with_date_base(foundEvent.start, parsedArgs.start, parsedArgs.start_date)
             if start != foundEvent.start:
                 if start < now:
                     raise Exception(f"Start time is in the past!")
@@ -215,18 +214,17 @@ class Command_Edit(commands.Command):
                 baseEnd = end
                 if end == None:
                     baseEnd = start
-                end = helpers.mergeTimeWithDateBase(baseEnd, parsedArgs.end, parsedArgs.end_date)
+                end = helpers.merge_time_with_date_base(baseEnd, parsedArgs.end, parsedArgs.end_date)
             if end != None:
                 if end < start:
                     raise Exception(f"End is before start")
             foundEvent.start = start
             foundEvent.end = end
-            # TODO : 
-            # repeat
-            # expire
+
+
             manager.publish()
             results = [f"Updated event :id: {foundEvent.id}"] 
-            results.append(f'Title: "{foundEvent.name}"\nStart: {foundEvent.start}\nEnd: {foundEvent.end}\nRepeat: {foundEvent.repeat}\nDescription: "{foundEvent.description}"')
+            results.append(f'Title: "{foundEvent.name}"\nStart: {foundEvent.start}\nEnd: {foundEvent.end}\nDescription: "{foundEvent.description}"')
             if foundEvent.thumbnail != None:
                 results[1] = f"{results[1]}\nThumbnail: '{foundEvent.thumbnail}'"
             if foundEvent.image != None:
@@ -237,31 +235,6 @@ class Command_Edit(commands.Command):
 
 Command_Edit()
 
-class Command_List(commands.Command):
-    def __init__(self, args):
-        super().__init__("LIST")
-
-    requiredArgs = [
-        Argument("UID", type=parse_types.parse_uid, help="The UID of the Event to Skip")
-    ]
-
-    def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            foundEvent = manager.findEventByUID(parsedArgs.UID)
-            result = []
-            if foundEvent != None:
-                # Print all users for each 'RSVP category'
-                result.append(f"List some members.")
-                pass
-            else:
-                result.append(f"No event found with UID {parsedArgs.UID}")
-            
-            return Result(value=result)
-        except Exception as e:
-            return Result(error=e.args)
-
-# List cannot be implemented untill sign ups are implemented
 class Command_Config_Reminder(commands.Command):
     def __init__(self):
         self.name = "reminder"
@@ -276,23 +249,22 @@ class Command_Config_Reminder(commands.Command):
     ]
 
     def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         if args.addremove == "add":
             manager.m_config.m_reminders.append(Reminder(args.hours, args.message))
             manager.publish()
-            return Result(value=f"Reminder Added {args.hours} hours before events begin.")
+            return [ [ "Reminders", f"Reminder Added {args.hours} hours before events begin." ] ]
         else:
-            for reminder in manager.m_reminders:
+            for reminder in manager.m_config.m_reminders:
                 if reminder.hours == args.hours:
-                    manager.m_reminders.remove(reminder)
+                    manager.m_config.m_reminders.remove(reminder)
                     manager.publish()
-                    return Result(value=manager.m_reminders)
+                    return [ [ "Reminders", f"Reminder {args.hours} has been removed." ] ]
+        
+        raise Exception(f"Reminder {args.hours} could not be found.")
 
 class Command_Config_Announcement(commands.Command):
     def __init__(self):
@@ -303,17 +275,13 @@ class Command_Config_Announcement(commands.Command):
     ]
 
     def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
-        # Validate Channel? Maybe do that at a higher level?
         manager.m_config.m_announcementChannel = args.channel
         manager.publish()
-        return Result(value=f"Announcements channel set to {args.channel}")
+        return [ ["Announcements", f"Announcements channel set to <#{args.channel}>"] ]
 
 class Command_Config_Signup(commands.Command):
     def __init__(self):
@@ -324,17 +292,14 @@ class Command_Config_Signup(commands.Command):
     ]
 
     def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?
         manager.m_config.m_signupChannel = args.channel
         manager.publish()
-        return Result(value=f"Signup channel set to {args.channel}")
+        return [ [ "Signup", "Signup channel set to <#{args.channel}>" ] ]
 
 class Command_Config_Logs(commands.Command):
     def __init__(self):
@@ -345,17 +310,14 @@ class Command_Config_Logs(commands.Command):
     ]
 
     def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?
         manager.m_config.m_logsChannel = args.channel
         manager.publish()
-        return Result(value=f"Logs channel set to {args.channel}")
+        return [ [ "Logs", f"Logs channel set to <#{args.channel}>" ] ]
 
 class Command_Config_Timezone(commands.Command):
     def __init__(self):
@@ -366,18 +328,71 @@ class Command_Config_Timezone(commands.Command):
     ]
 
     def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            return self.executeInternal(parsedArgs)
-        except Exception as e:
-            return Result(error=e.args)
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate this? Maybe keep less than +-12
         # In the future could add names of timezones or countries but not required
         manager.m_config.m_utcOffset = args.offset
         manager.publish()
-        return Result(value=f"Timezone set to {args.offset}")
+        return [ [ "Timezone", f"Timezone set to {args.offset}" ] ]
+
+class Command_Config_Debug(commands.Command):
+    def __init__(self):
+        self.name = "debug"
+
+    requiredArgs = [
+        Argument("channel", type=parse_types.parse_channel, help="The name of the channel that debug messages will be posted to.")
+    ]
+
+    def execute(self, args):
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
+
+    def executeInternal(self, args):
+        # Validate Channel? Maybe do that at a higher level?
+        manager.m_config.m_debugChannel = args.channel
+        manager.publish()
+        return [ [ "Debug", f"Debug channel set to <#{args.channel}>" ] ]
+
+class Command_Config_Sorting(commands.Command):
+    def __init__(self):
+        self.name = "sorting"
+
+    requiredArgs = [
+        Argument("order", choices=["asc","desc"], help="The order in which events will be sorted.")
+    ]
+
+    def execute(self, args):
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
+
+    def executeInternal(self, args):
+        if args.order == "asc":
+            manager.m_config.m_isAscendingSort = True
+        else:
+            manager.m_config.m_isAscendingSort = False
+        manager.publish()
+        resultStr = "Ascending" if manager.m_config.m_isAscendingSort == True else "Descending"
+        return [ [ "Sorting", resultStr ] ]
+
+class Command_Config_Welcome_Message(commands.Command):
+    def __init__(self):
+        self.name = "welcome-message"
+
+    requiredArgs = [
+        Argument("message", help="A message to overwrite the old welcome message.")
+    ]
+
+    def execute(self, args):
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
+
+    def executeInternal(self, args):
+        manager.m_config.m_welcomeMessage = args.message
+        manager.publish()
+        return [ [ "Welcome Message", args.message ] ] 
 
 class Command_Config(commands.Command):
     def __init__(self):
@@ -388,62 +403,68 @@ class Command_Config(commands.Command):
         Command_Config_Announcement(),
         Command_Config_Signup(),
         Command_Config_Logs(),
+        Command_Config_Debug(),
         # Reminders
         Command_Config_Reminder(),
         # Time
-        Command_Config_Timezone()
+        Command_Config_Timezone(),
+        # Sorting
+        Command_Config_Sorting(),
+        # Welcome Message
+        Command_Config_Welcome_Message()
         ]
 
     def executeInternal(self, args):
-        # Heading
-        headingResult = ["Configuration"]
-        # Channels - Convert to channel from channel ID
-        channelsResult = ["Channels"]
-        channelsResult.append(f"Announcements : <#{manager.m_config.m_announcementChannel}>")
-        channelsResult.append(f"Signups : <#{manager.m_config.m_signupChannel}>")
-        channelsResult.append(f"Logs : <#{manager.m_config.m_logsChannel}>")
+        # Channels - 
+        channelsHeading = "Channels"
+        channelsContent = f"""Announcements : <#{manager.m_config.m_announcementChannel}>
+                              Signups       : <#{manager.m_config.m_signupChannel}>
+                              Logs          : <#{manager.m_config.m_logsChannel}>
+                              Debug         : <#{manager.m_config.m_debugChannel}>"""
+        channelsData = [channelsHeading, channelsContent]
         # Sort Order
-        sortOrderResult = ["Sort Order"]
-        sortOrderStr = "Ascending" if manager.m_config.m_isAscendingSort else "Descending"
-        sortOrderResult.append(f"Sort Order : {sortOrderStr}")
+        sortOrderHeading = "Sort Order"
+        sortOrderContent = "Ascending" if manager.m_config.m_isAscendingSort else "Descending"
+        sortOrderData = [sortOrderHeading, sortOrderContent]
         # Reminders
-        remindersResult = ["Reminders"]
+        remindersHeading = "Reminders"
+        remindersContent = "0"
         for reminder in manager.m_config.m_reminders:
-            remindersResult.append(f"{reminder.hours}")
+            remindersContent = f"{remindersContent}, {reminder.hours}"
+        remindersData = [remindersHeading, remindersContent]
         # Time
-        utcoffsetResult = ["Time"]
-        utcoffsetResult.append(f"UTC Offset : {manager.m_config.m_utcOffset}")
+        timeHeading = "Time"
+        timeContent = f"UTC Offset: {manager.m_config.m_utcOffset} hours"
+        timeData = [timeHeading, timeContent]
         # Reactions
-        reactionsResult = ["Reactions"]
-        reactionsResult.append(f"RSVP Reactions :\n")
+        reactionsHeading = "Reactions"
+        reactionsContent = ""
         for key, value in manager.m_config.m_reactions.items():
-            reactionsResult[1] = f"{reactionsResult[1]}{value} : {key}\n"
+            reactionsContent = f"{reactionsContent}{value} - {key}\n"
+        reactionsData = [reactionsHeading, reactionsContent]
+        # Thumbnails
+        thumbnailsHeading = "Thumbnails"
+        thumbnailsContent = ""
+        for thumbnail in manager.m_config.m_thumbnails:
+            index = manager.m_config.m_thumbnails.index(thumbnail)
+            abbrDay = pyCalendar.day_abbr[index]
+            thumbnailsContent = f"{thumbnailsContent}{abbrDay} - {thumbnail}\n"
+        thumbnailsData = [thumbnailsHeading, thumbnailsContent]
+        # Welcome Message
+        welcomeMessageHeading = "Welcome Message"
+        welcomeMessageContent = manager.m_config.m_welcomeMessage
+        welcomeMessageData = [welcomeMessageHeading, welcomeMessageContent]
 
         result = [
-            headingResult,
-            channelsResult,
-            sortOrderResult,
-            remindersResult,
-            utcoffsetResult,
-            reactionsResult
+            channelsData,
+            sortOrderData,
+            remindersData,
+            timeData,
+            reactionsData,
+            thumbnailsData,
+            welcomeMessageData
             ]
 
-        # Ghetto fix - formating
-        formatedString = f"{result[0][0]}"
-        # Channels
-        formatedString = f"{formatedString}\n```xl\n// {result[1][0]}"
-        for channelStr in result[1][1:]:
-            formatedString = f"{formatedString}\n{channelStr}"
-        formatedString = f"{formatedString}```"
-        # Sort Order
-        formatedString = f"{formatedString}\n```xl\n// {result[2][0]} \n{result[2][1:]}```"
-        # Reminders
-        formatedString = f"{formatedString}```xl\n// {result[3][0]} \n{result[3][1:]}```"
-        # Time
-        formatedString = f"{formatedString}```xl\n// {result[4][0]} \n{result[4][1]}```"
-        # Reactions
-        formatedString = f"{formatedString}```xl\n// {result[5][0]} \n{result[5][1]}```"
+        return result
 
-        return Result(value=formatedString)
 Command_Config()
-

@@ -1,3 +1,4 @@
+print("snCommands/manager.py")
 commandDictionary = {}
 
 def registerCommand(commandName, command):
@@ -12,6 +13,12 @@ def findCommand(commandName):
     return commandDictionary.get(commandNameUpper)
 
 def executeCommand(commandName, args):
+    # Replace italicised quotes with regular quotes before parsing args.
+    print(args)
+    for arg in args:
+        arg.replace('”', '"')
+        arg.replace('“', '"')
+    print(args)
     foundCommand = findCommand(commandName)
     if foundCommand != None:
         return foundCommand.execute(args)

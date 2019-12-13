@@ -42,8 +42,11 @@ async def send_debug_message_async(message):
     if debugChannelID == 0:
         snHelpers.debug_print("Debug channel is not set!")
         return
-    channel = bot.get_channel(debugChannelID)
-    await channel.send(message)
+    try:
+        channel = get_channel(debugChannelID)
+        await channel.send(message)
+    except discord.errors.NotFound:
+        pass
 
 async def post_announcement_message_async(message):
     snHelpers.debug_print(f"post_announcement_message_async({message})")
@@ -51,8 +54,11 @@ async def post_announcement_message_async(message):
     if announcementChannelID == 0:
         snHelpers.debug_print("Announcements channel is not set!")
         return
-    channel = bot.get_channel(announcementChannelID)
-    await channel.send(message)
+    try:
+        channel = get_channel(announcementChannelID)
+        await channel.send(message)
+    except discord.errors.NotFound:
+        pass
 
 async def post_log_message_async(message):
     snHelpers.debug_print(f"post_log_message_async({message})")
@@ -60,9 +66,12 @@ async def post_log_message_async(message):
     if logsChannelID == 0:
         snHelpers.debug_print("Logs channel is not set!")
         return
-    channel = bot.get_channel(logsChannelID)
-    embed = discord.Embed(title="Signup Log", description=message)
-    await channel.send(embed=embed)
+    try:
+        channel = get_channel(logsChannelID)
+        embed = discord.Embed(title="Signup Log", description=message)
+        await channel.send(embed=embed)
+    except discord.errors.NotFound:
+        pass
 
 # Callbacks
 @bot.event
@@ -74,10 +83,10 @@ async def on_event_deleted_async(signupMessageID):
     snHelpers.debug_print(f"on_event_deleted_async({signupMessageID})")
 
     if signupMessageID != None:
-        signupChannel = bot.get_channel(snEvents.config.m_signupChannel)
         try:
-            sMessage = await signupChannel.fetch_message(signupMessageID)
-            await sMessage.delete()
+            signupChannel = get_channel(snEvents.config.m_signupChannel)
+            message = await signupChannel.fetch_message(signupMessageID)
+            await message.delete()
         except discord.errors.NotFound:
             pass
 

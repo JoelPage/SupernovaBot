@@ -171,7 +171,7 @@ async def update_async():
     snHelpers.debug_print("Waiting for bot to be ready...")
     nowStr = snHelpers.get_now_time_string()
     # TODO : This could be in the config also
-    interval = 30
+    interval = 5
     await send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.")
     await bot.wait_until_ready()
     while True:
@@ -209,22 +209,39 @@ async def check_reactions_async():
     try:        
         for event in snEvents.events:
             if event.signupMessageID != None:
+                snHelpers.debug_print(f"get_chanel({snEvents.config.m_signupChannel})")
                 signupChannel = get_channel(snEvents.config.m_signupChannel)
+                snHelpers.debug_print(f"fetch_message_async({signupChannel},{event.signupMessageID})")
                 sMessage = await fetch_message_async(signupChannel, event.signupMessageID)
+                snHelpers.debug_print("Message Fetched")
                 for reaction in sMessage.reactions:
+                    snHelpers.debug_print(f"Looping for reaction {reaction}")
                     for emoji in snEvents.manager.m_config.m_reactions.keys():
+                        snHelpers.debug_print(f"Looping for emoji {emoji}")
                         if reaction.emoji == emoji:
                             users = await reaction.users().flatten()
                             for user in users:
                                 if user != bot.user:
-                                    if event.signups[user.id] != snEvents.config.m_reactions[reaction.emoji]:
-                                        event.isDirty = True
-                                        reactionStr = f"@{user} reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
-                                        snHelpers.debug_print(reactionStr)
-                                        reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
-                                        event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
-    except Exception:
-        await send_debug_message_async("check_Reactions_async() Discord - NotFound")
+                                    if event.signups != None:
+                                        
+                                        userSignup = None
+                                        try:
+                                            userSignup = event.signups[user.id]
+                                        except KeyError:
+                                            pass
+
+                                        reactionEmoji = snEvents.config.m_reactions[reaction.emoji]
+                                        if userSignup != reactionEmoji:
+                                            event.isDirty = True
+                                            reactionStr = f"<@{user}> reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
+                                            snHelpers.debug_print(reactionStr)
+                                            reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
+                                            event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
+
+                                    else:
+                                        snHelpers.debug_print("event signups was none")
+    except Exception as e:
+        await send_debug_message_async(f"check_reactions_async() - {e}")
 
     if reactionsLogBuffer != "":
         await post_log_message_async(reactionsLogBuffer)

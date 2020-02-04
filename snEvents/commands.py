@@ -154,7 +154,7 @@ class Command_Skip(commands.Command):
     def execute(self, args):
         try:
             parsedArgs = self.parseArgs(args)
-            result = manager.remove_event(parsedArgs.UID)
+            result = manager.remove_event_by_id(parsedArgs.UID)
             return Result(value=result)
         except Exception as e:
             return Result(error=e.args)

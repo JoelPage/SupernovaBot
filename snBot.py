@@ -68,7 +68,8 @@ async def post_log_message_async(message):
         return
     try:
         channel = get_channel(logsChannelID)
-        embed = discord.Embed(title="Signup Log", description=message)
+        nowStr = snHelpers.get_now_time_string()
+        embed = discord.Embed(title=f"Signup Log {nowStr}", description=message)
         await channel.send(embed=embed)
     except Exception:
         pass
@@ -209,15 +210,10 @@ async def check_reactions_async():
     try:        
         for event in snEvents.events:
             if event.signupMessageID != None:
-                snHelpers.debug_print(f"get_chanel({snEvents.config.m_signupChannel})")
                 signupChannel = get_channel(snEvents.config.m_signupChannel)
-                snHelpers.debug_print(f"fetch_message_async({signupChannel},{event.signupMessageID})")
                 sMessage = await fetch_message_async(signupChannel, event.signupMessageID)
-                snHelpers.debug_print("Message Fetched")
                 for reaction in sMessage.reactions:
-                    snHelpers.debug_print(f"Looping for reaction {reaction}")
                     for emoji in snEvents.manager.m_config.m_reactions.keys():
-                        snHelpers.debug_print(f"Looping for emoji {emoji}")
                         if reaction.emoji == emoji:
                             users = await reaction.users().flatten()
                             for user in users:
@@ -233,7 +229,7 @@ async def check_reactions_async():
                                         reactionEmoji = snEvents.config.m_reactions[reaction.emoji]
                                         if userSignup != reactionEmoji:
                                             event.isDirty = True
-                                            reactionStr = f"<@{user}> reacted to {event.name} with {snEvents.config.m_reactions[reaction.emoji]}"
+                                            reactionStr = f"<@{user.id}> reacted to {event.name} with {reaction.emoji}"
                                             snHelpers.debug_print(reactionStr)
                                             reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
                                             event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]

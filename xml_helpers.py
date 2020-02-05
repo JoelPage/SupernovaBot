@@ -200,8 +200,10 @@ def prettify_minidom(tree):
 # Write xml string to file
 def fileWrite(data, fileName):
     prettyData = prettify_minidom(data)
-    file = open(fileName, "w")
-    file.write(prettyData)
+    file = open(fileName, "wb")
+
+    file.write(bytes(prettyData, "utf-8"))
+
     file.close()
     
 # Read tree from xml file

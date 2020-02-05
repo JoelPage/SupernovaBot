@@ -8,17 +8,17 @@ import snEvents.helpers as snHelpers
 class Event():
     # Do we need such an explicit constructor?
     def __init__(self, 
-                 name, 
-                 start, 
-                 id=None, 
-                 end=None, 
-                 started=False, 
-                 reminded=None, 
-                 description=None, 
-                 image=None, 
-                 thumbnail=None,
-                 signupMessageID=None,
-                 signups=None):
+                name, 
+                start, 
+                id=None, 
+                end=None, 
+                started=False, 
+                reminded=None, 
+                description=None, 
+                image=None, 
+                thumbnail=None,
+                signupMessageID=None,
+                signups=None):
 
         if id == None:
             self.id = snUID.get()

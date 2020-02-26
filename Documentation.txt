@@ -1,0 +1,31 @@
+File Structure
+
+Main.py
+- Handles Input Parameters.
+- Run discord bot in online/offline mode.
+
+Dependancies
+- snBot.py
+
+Main should include as little as possible,
+preferably exclusively SupernovaBot (snBot)
+
+snBot.py
+- SupernovaBot utilises discord's bot API to provide an interface via discord commands,
+to host and manage events where users can RSVP.
+- Commands are executed within discord chat channels where the bot will respond
+with appropriate information such as results or errors. 
+
+Internal Modules
+- snBot_Callbacks.py
+    -> Contains callbacks utilising the @bot.event decorator
+    -> These are typically async functions that pass varying parameters
+- snBot_Commands.py
+    -> Contains callback utilising the @bot.command() decorator
+    -> These are typically sync functions that pass ctx and *args
+- snBot_Output.py
+    -> Contains functions that return messages back to discord.
+
+Dependancies
+- snCommands/ SupernovaCommands is a generic internal interface for executing commands.
+- snEvents/ SupernovaEvents an internal interface for managing events.

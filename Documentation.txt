@@ -29,3 +29,13 @@ Internal Modules
 Dependancies
 - snCommands/ SupernovaCommands is a generic internal interface for executing commands.
 - snEvents/ SupernovaEvents an internal interface for managing events.
+
+
+Commands
+
+Command results
+- Results are structures returned by commands.
+- Results need to be handled at the bot level as they will likely require formatting.
+- Results contain two objects an Error and a Result.
+- Results returned by commands should check their error before attempting to access their results.
+- A Result's internal result will contain a dictionary of strings, typically in a Header/Body format.

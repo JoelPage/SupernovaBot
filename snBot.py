@@ -179,3 +179,12 @@ async def on_event_deleted_async(signupMessageID):
             await message.delete()
         except Exception:
             pass
+
+async def refresh():
+    await check_events_async()
+    await check_reactions_async()
+    await refresh_embeds_async()
+    publish()
+
+def publish():
+    snEvents.manager.publish()

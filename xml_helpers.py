@@ -102,7 +102,7 @@ def set_attrib_text_int_bytes(node, name, value):
 def get_attrib_text(node, name):
     if name in node.attrib.keys():
         return node.attrib[name]
-     
+
 def get_attrib_float(node, name):
     valueAsStr = get_attrib_text(node, name)
     if valueAsStr != None:
@@ -123,63 +123,19 @@ def get_attrib_unicode(node, name):
     if valueAsBytes != None:
         return valueAsBytes.decode('utf-8')
 
-# https://stackoverflow.com/questions/24813872/creating-xml-documents-with-whitespace-with-xml-etree-celementtree
-# Return a pretty-printed XML string for the Element.
-# Tried this function before but it produced strange results so I just wrote my own.
-def prettify_custom(tree):
-    # Read out tree as bytes
-    encoding = 'utf-8'
-    treeAsBytes = pyElementTree.tostring(tree, encoding)
-    # Convert to string
-    treeAsString = str(treeAsBytes, encoding)
-    # Remove new lines
-    splitTree = treeAsString.split("\n")
-    treeAsString = "".join(splitTree)
-    # find all words enclosed by triangle braces
-    # WARNING : This is a bit janky, if someone has a name that includes triangle braces
-    # then this logic could break entirely.
-    # It also fails when trying to add attributes
-    split = pyRe.findall(r"<(.*?)\>", treeAsString)
+# Read tree from xml file
+def fileRead(fileName):
+    file = open(fileName, "r")
+    tree = pyElementTree.parse(file)
+    file.close()
+    return tree
 
-    # Variables used for producing correct indentation.
-    start = 0               # The index into the string we will start searching.
-    depth = 0               # The depth of the indentation.
-    indentation = "    "    # The spacing used for indentation.
-    lastString = ""         # The previous element name.
-
-    for string in split:
-        # Apply braces to the string to avoid imperfect matches.
-        strToFind = "<" + string + ">"
-        # Find the index of this string from start to len(treeAsString)
-        index = treeAsString.find(strToFind, start, len(treeAsString))
-        # Set the start value past the string
-        start = index + len(strToFind)
-
-        # If this is a closing element reduce the depth by 1
-        if string.startswith("/"):
-            depth -= 1
-            # If this element matches the last then perform the indentation
-            if not lastString == string[1:]:
-                # Split the strings from index, add a new line and indent, then join them together.
-                treeAsString = treeAsString[:index] + "\n" + (indentation * depth) + treeAsString[index:]
-                # Increase the start index by the length of the indentation
-                start = start + len("\n") + len(indentation * depth)
-
-            # Cache this string for the next loop
-            lastString = string[1:]
-        # If this is an opening element
-        else:
-            # and if this is not the first element
-            if depth != 0:
-                # Perform the indentation and increase the start index
-                treeAsString = treeAsString[:index] + "\n" + (indentation * depth) + treeAsString[index:]
-                start = start + len("\n") + len(indentation * depth)
-
-            # Increase the depth and cache the string
-            depth += 1
-            lastString = string
-
-    return treeAsString
+# Write xml string to file
+def fileWrite(data, fileName):
+    prettyData = prettify_minidom(data)
+    file = open(fileName, "wb")
+    file.write(bytes(prettyData, "utf-8"))
+    file.close()
 
 def prettify_minidom(tree):
     # Read out tree as bytes
@@ -196,19 +152,3 @@ def prettify_minidom(tree):
     INDENT = "    "
     reparsed = pyMinidom.parseString(treeAsString)
     return reparsed.toprettyxml(indent=INDENT)
-
-# Write xml string to file
-def fileWrite(data, fileName):
-    prettyData = prettify_minidom(data)
-    file = open(fileName, "wb")
-
-    file.write(bytes(prettyData, "utf-8"))
-
-    file.close()
-    
-# Read tree from xml file
-def fileRead(fileName):
-    file = open(fileName, "r")
-    tree = pyElementTree.parse(file)
-    file.close()
-    return tree

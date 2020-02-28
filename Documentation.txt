@@ -36,6 +36,6 @@ Commands
 Command results
 - Results are structures returned by commands.
 - Results need to be handled at the bot level as they will likely require formatting.
-- Results contain two objects an Error and a Result.
-- Results returned by commands should check their error before attempting to access their results.
-- A Result's internal result will contain a dictionary of strings, typically in a Header/Body format.
+- Results contain two objects an Error and a Value.
+- Results returned by commands should check their error before attempting to access their value.
+- A Result's internal value will contain a dictionary of strings, typically in a Header/Body format.

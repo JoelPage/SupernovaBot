@@ -84,6 +84,8 @@ async def check_reactions_async():
     try:        
         # For Each Message
         for event in snEvents.events:
+            if snBot_Helpers.is_event_locked(event):
+                continue
             if event.signupMessageID != None:
                 sChannel = snBot_Helpers.get_channel(snEvents.config.m_signupChannel)
                 sMessage = await snBot_Helpers.fetch_message_async(sChannel, event.signupMessageID)
@@ -150,7 +152,7 @@ async def refresh_embeds_async():
                 for userId in value:
                     fValue = f"{fValue}<@{userId}>\n"
                 if fValue == "":
-                    fValue = ":nobody:"
+                    fValue = "Nobody"
                 embed.add_field(name=fName, value=fValue, inline=True)
                 eventEmbeds[event] = embed
 
@@ -158,6 +160,8 @@ async def refresh_embeds_async():
         for key, value in eventEmbeds.items():
             message = await sChannel.send(embed=value)
             key.signupMessageID = message.id
+            if snBot_Helpers.is_event_locked(key):
+                continue
             messages.append(message)
         for message in messages:
             for emoji in snEvents.config.m_reactions.keys():

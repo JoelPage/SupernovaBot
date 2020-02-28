@@ -30,7 +30,7 @@ class Command():
             return Result(error=e.args[0])
 
     def executeInternal(self, args):
-        return "Function executeInternal not overiden!"
+        return "Function executeInternal not overriden!"
 
     def parseArgs(self, args):
         try:

@@ -15,9 +15,10 @@ class Config():
         self.m_signupChannel = 0
         self.m_logsChannel = 0
         # Sort Order
-        self.m_isAscendingSort = True
+        self.m_isAscendingSort = False
         # Time
         self.m_utcOffset = 0
+        self.m_signupLimit = 0
         # Signups
         self.m_reactions = { 
             "✅" : "Yes",
@@ -44,6 +45,7 @@ class Config():
         snXMLHelpers.create_and_set_node_text_bool(configNode, 'ascendingsort', self.m_isAscendingSort)
         snXMLHelpers.create_and_set_node_text_float(configNode, 'utcoffset', self.m_utcOffset)
         snXMLHelpers.create_and_set_node_text(configNode, 'welcomemessage', self.m_welcomeMessage)
+        snXMLHelpers.create_and_set_node_text_int(configNode, 'signuplimit', self.m_signupLimit)
 
         remindersNode = snXMLHelpers.create_node(configNode, 'reminders')
         for reminder in self.m_reminders:
@@ -66,6 +68,7 @@ class Config():
         self.m_isAscendingSort = snXMLHelpers.get_value_bool(configNode, 'sortorder')
         self.m_utcOffset = snXMLHelpers.get_value_float(configNode, 'utcoffset')
         self.m_welcomeMessage = snXMLHelpers.get_value_text(configNode, 'welcomemessage')
+        self.m_signupLimit = snXMLHelpers.get_value_int(configNode, 'signuplimit')
 
         remindersNode = snXMLHelpers.get_node(configNode, 'reminders')
         reminderNodes = snXMLHelpers.get_nodes(remindersNode, 'reminder')

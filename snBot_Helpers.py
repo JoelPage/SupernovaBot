@@ -1,4 +1,5 @@
 print("snBot_Helpers.py")
+import datetime
 # Discord
 import discord
 from discord.ext import commands as commands
@@ -46,3 +47,16 @@ async def is_result_valid(ctx, result):
 async def context_send_codeblock(ctx, message):
     await ctx.send(f"```{message}```")
 
+def is_event_locked(event):
+    now = snEvents.helpers.get_now_offset()
+    if now > event.start:
+        print(f"{now} > {event.start}")
+        return True # already started
+    signupLimitDelta = datetime.timedelta(hours=snEvents.config.m_signupLimit)
+    lockTime = event.start - signupLimitDelta
+    if now > lockTime:
+        print(f"{now} > {lockTime}")
+        return True # event isn't locked
+    print("Event not locked")
+    return False
+    

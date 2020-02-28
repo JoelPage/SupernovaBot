@@ -183,9 +183,7 @@ class Command_Edit(commands.Command):
 
     def execute(self, args):
         try:
-            print("ParseArgs")
             parsedArgs = self.parseArgs(args)
-            print(f"Find Event {parsedArgs.UID}")
             foundEvent = manager.find_event_by_id(parsedArgs.UID)
             if foundEvent == None:
                 raise Exception(f"No event found with ID {parsedArgs.UID}")
@@ -202,13 +200,11 @@ class Command_Edit(commands.Command):
             # Time Updates            
             now = helpers.get_now_offset()
             # Start
-            print("Validate Start")
             start = helpers.merge_time_with_date_base(foundEvent.start, parsedArgs.start, parsedArgs.start_date)
             if start != foundEvent.start:
                 if start < now:
                     raise Exception(f"Start time is in the past!")
             # End
-            print("Validate End")
             end = foundEvent.end
             if parsedArgs.end != None or parsedArgs.end_date != None:
                 baseEnd = end
@@ -220,7 +216,6 @@ class Command_Edit(commands.Command):
                     raise Exception(f"End is before start")
             foundEvent.start = start
             foundEvent.end = end
-
 
             manager.publish()
             results = [f"Updated event :id: {foundEvent.id}"] 
@@ -327,16 +322,25 @@ class Command_Config_Timezone(commands.Command):
         Argument("offset", type=float, help="The offset in hours from UTC")
     ]
 
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
-
     def executeInternal(self, args):
         # Validate this? Maybe keep less than +-12
         # In the future could add names of timezones or countries but not required
         manager.m_config.m_utcOffset = args.offset
         manager.publish()
         return [ [ "Timezone", f"Timezone set to {args.offset}" ] ]
+
+class Command_Config_Signup_Limit(commands.Command):
+    def __init__(self):
+        self.name = "signuplimit"
+
+    requiredArgs = [
+        Argument("limit", type=float, help="The number of hours before the raid that signups will be locked.")
+    ]
+
+    def executeInternal(self, args):
+        manager.m_config.m_signupLimit = args.limit
+        manager.publish()
+        return [ [ "Signup Limit", f"Signup limit set to {args.limit}" ] ]
 
 class Command_Config_Debug(commands.Command):
     def __init__(self):
@@ -345,10 +349,6 @@ class Command_Config_Debug(commands.Command):
     requiredArgs = [
         Argument("channel", type=parse_types.parse_channel, help="The name of the channel that debug messages will be posted to.")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?
@@ -363,10 +363,6 @@ class Command_Config_Sorting(commands.Command):
     requiredArgs = [
         Argument("order", choices=["asc","desc"], help="The order in which events will be sorted.")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         if args.order == "asc":
@@ -384,10 +380,6 @@ class Command_Config_Welcome_Message(commands.Command):
     requiredArgs = [
         Argument("message", help="A message to overwrite the old welcome message.")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         manager.m_config.m_welcomeMessage = args.message
@@ -408,6 +400,8 @@ class Command_Config(commands.Command):
         Command_Config_Reminder(),
         # Time
         Command_Config_Timezone(),
+        # Signup Limit
+        Command_Config_Signup_Limit(),
         # Sorting
         Command_Config_Sorting(),
         # Welcome Message
@@ -436,6 +430,10 @@ class Command_Config(commands.Command):
         timeHeading = "Time"
         timeContent = f"UTC Offset: {manager.m_config.m_utcOffset} hours"
         timeData = [timeHeading, timeContent]
+        # Signup Limit
+        signupLimitHeading = "Signup Limit"
+        signupLimitContent = f"Signup Limit: {manager.m_config.m_signupLimit} hours"
+        signupLimitData = [signupLimitHeading, signupLimitContent]
         # Reactions
         reactionsHeading = "Reactions"
         reactionsContent = ""
@@ -460,6 +458,7 @@ class Command_Config(commands.Command):
             sortOrderData,
             remindersData,
             timeData,
+            signupLimitData,
             reactionsData,
             thumbnailsData,
             welcomeMessageData

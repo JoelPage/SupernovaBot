@@ -118,5 +118,18 @@ def parse_channel(string):
 
 def parse_url(string):
     try:
+        # TODO : Actually apply some validation here lol
         return string
     except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse url")
+
+def parse_user(string):
+    try:
+        if string.startswith('<@!') and string.endswith('>'):
+            return int(string[3:len(string)-1])
+        else: raise ValueError
+    except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse user")
+
+def parse_reaction(string):
+    try:
+        print(f"Reaction = {string}")
+    except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse reaction")

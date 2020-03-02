@@ -21,7 +21,7 @@ def initialise(bot):
     @bot.command()
     @commands.has_role('Officer')
     async def refresh(ctx, *args):
-        await snBot.refresh()
+        await snBot.refresh_async()
         await ctx.send("Refresh Complete")
 
     @bot.command()
@@ -30,7 +30,7 @@ def initialise(bot):
         result = snCommands.executeCommand("CREATE", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
             await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
-            await snBot.refresh()
+            await snBot.refresh_async()
 
     @bot.command()
     @commands.has_role('Officer')
@@ -38,15 +38,53 @@ def initialise(bot):
         result = snCommands.executeCommand("SKIP", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
             await ctx.send(result.value)
-            await snBot.refresh()
+            await snBot.refresh_async()
 
     @bot.command()
     @commands.has_role('Officer')
     async def edit(ctx, *args):
         result = snCommands.executeCommand("EDIT", args)
+        print("Result recieved")
         if await snBot_Helpers.is_result_valid(ctx, result):
-            await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
-            await snBot.refresh()
+            # This command has a subcommand for editing the signups for an event.
+            # WARNING : This is a hack to make add/remove work without refactoring
+            # commands to be async or changing how commands and results work in general!
+            if result.value.subname == "signup":
+                # Validate Event
+                event = snEvents.manager.find_event_by_id(result.value.UID)
+                if event == None:
+                    await snBot_Helpers.context_send_codeblock(ctx, f"Event with ID {result.value.UID} not found!")
+                    return
+                # Validate user
+                userID = result.value.user
+                user = snBot.bot.get_user(userID)
+                if user == None:
+                    await snBot_Helpers.context_send_codeblock(ctx, f"User with ID {userID} not found!")
+                    return
+                reaction = result.value.reaction
+                # Add or Remove
+                if result.value.addremove == "add":
+                    # If a reaction wasn't provided, assume Yes
+                    if reaction == None:
+                        reaction = "Yes"
+                    # Validate Reaction
+                    if reaction not in snEvents.config.m_reactions.values():
+                        await snBot_Helpers.context_send_codeblock(ctx, f"Reaction of type {reaction} not found!")
+                        return
+                    event.signups[userID] = reaction            
+                    await snBot.refresh_async()
+                else:
+                    # If a reaction wasn't provided, remove the users existing reaction
+                    if reaction == None:
+                        event.signups.pop(userID)
+                        await snBot.refresh_async()
+                    else:
+                        if reaction == event.signups[userID]:
+                            event.signups.pop(userID)                
+                            await snBot.refresh_async()
+            else:
+                await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
+                await snBot.refresh_async()
 
     @bot.command()
     @commands.has_role('Officer')
@@ -62,9 +100,7 @@ def initialise(bot):
     async def config(ctx, *args):
         result = snCommands.executeCommand("CONFIG", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
-            print("isValid == True")
             embed = discord.Embed(title="Configuration")
             for fieldData in result.value:
                 embed.add_field(name=fieldData[0], value=fieldData[1], inline=False)
-            print("Sending Embed")
             await ctx.send(embed=embed)

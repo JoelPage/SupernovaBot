@@ -93,9 +93,7 @@ class Event():
         if signupNodes  != None:
             for signupNode in signupNodes:
                 userId = snXMLHelpers.get_attrib_int(signupNode, 'user')
-                print(userId)
                 reaction = snXMLHelpers.get_attrib_text(signupNode, 'reaction')
-                print(reaction)
                 self.signups[userId] = reaction
 
     def get_embed_description(self):

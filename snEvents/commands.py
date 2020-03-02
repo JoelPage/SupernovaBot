@@ -134,8 +134,6 @@ class Command_Create(commands.Command):
             if newEvent.image != None:
                 results[1] = f'{results[1]}\nImage: "{newEvent.image}"'
 
-            print("Create Event Complete")
-
             return Result(value=results)
 
         except Exception as e:
@@ -161,6 +159,23 @@ class Command_Skip(commands.Command):
 
 Command_Skip()
 
+class Command_Edit_Signup(commands.Command):
+    def __init__(self):
+        self.name = "signup"
+
+    requiredArgs = [
+        Argument("addremove", choices=["add","remove"], help="Add or remove an event."),
+        Argument("user", type=parse_types.parse_user, help="The user to add to or remove from the event signups."),
+    ]
+
+    optionalArgs = [
+        Argument("reaction", type=parse_types.parse_reaction, help="The reaction to add/remove for the user to the event.")
+    ]
+
+    def executeInternal(self, args):
+        # This is a unique case! We need perform an Async Function.
+        return args
+
 class Command_Edit(commands.Command):
     def __init__(self):
         super().__init__("EDIT")
@@ -181,7 +196,11 @@ class Command_Edit(commands.Command):
         Argument("thumbnail", help="Set the event thumbnail. Format : 'String in quotes'")
     ]
 
-    def execute(self, args):
+    subCommands = [
+        Command_Edit_Signup()
+    ]
+
+    def executeInternal(self, args):
         try:
             parsedArgs = self.parseArgs(args)
             foundEvent = manager.find_event_by_id(parsedArgs.UID)
@@ -242,10 +261,6 @@ class Command_Config_Reminder(commands.Command):
     optionalArgs = [
         Argument("message", help="Custom message to be displayed when this reminder triggers.")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         if args.addremove == "add":

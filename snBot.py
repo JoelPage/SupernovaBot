@@ -184,7 +184,7 @@ async def on_event_deleted_async(signupMessageID):
         except Exception:
             pass
 
-async def refresh():
+async def refresh_async():
     await check_events_async()
     await check_reactions_async()
     await refresh_embeds_async()

@@ -18,6 +18,7 @@ class Command():
             parsedArgs = self.parseArgs(args)
             print("Arguments parsed")
             for subCommand in self.subCommands:
+                print(f"{subCommand.name} == {parsedArgs.subname}")
                 if subCommand.name == parsedArgs.subname:
                     value = subCommand.executeInternal(parsedArgs) 
                     print("Subcommand executed")

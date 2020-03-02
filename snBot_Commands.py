@@ -71,16 +71,20 @@ def initialise(bot):
                     if reaction not in snEvents.config.m_reactions.values():
                         await snBot_Helpers.context_send_codeblock(ctx, f"Reaction of type {reaction} not found!")
                         return
+                    
                     event.signups[userID] = reaction            
+                    print(f"Reaction {reaction} set for User <@!{userID}>")
                     await snBot.refresh_async()
                 else:
                     # If a reaction wasn't provided, remove the users existing reaction
                     if reaction == None:
                         event.signups.pop(userID)
+                        print(f"Reaction removed for User <@!{userID}>")
                         await snBot.refresh_async()
                     else:
                         if reaction == event.signups[userID]:
                             event.signups.pop(userID)                
+                            print(f"Reaction {reaction} removed for User <@!{userID}>")
                             await snBot.refresh_async()
             else:
                 await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")

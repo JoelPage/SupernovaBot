@@ -131,5 +131,5 @@ def parse_user(string):
 
 def parse_reaction(string):
     try:
-        print(f"Reaction = {string}")
+        return string
     except ValueError: raise i_argparse.ArgumentTypeError(f"Failed to parse reaction")

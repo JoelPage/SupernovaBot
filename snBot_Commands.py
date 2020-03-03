@@ -11,21 +11,24 @@ import snEvents.events as snEvents
 # Aliases
 snHelpers = snEvents.helpers
 
+# Permission Roles
+roles = ['Officer', 'Classleader', 'Servant']
+
 def initialise(bot):
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def version(ctx, *args):
         await ctx.send("Supernova Bot v0.1.2")
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def refresh(ctx, *args):
         await snBot.refresh_async()
         await ctx.send("Refresh Complete")
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def create(ctx, *args):
         result = snCommands.executeCommand("CREATE", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -33,7 +36,7 @@ def initialise(bot):
             await snBot.refresh_async()
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def skip(ctx, *args):
         result = snCommands.executeCommand("SKIP", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -41,7 +44,7 @@ def initialise(bot):
             await snBot.refresh_async()
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def edit(ctx, *args):
         result = snCommands.executeCommand("EDIT", args)
         print("Result recieved")
@@ -91,7 +94,7 @@ def initialise(bot):
                 await snBot.refresh_async()
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def events(ctx, *args):
         result = snCommands.executeCommand("EVENTS", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -100,7 +103,7 @@ def initialise(bot):
             await ctx.send(embed=embed)
 
     @bot.command()
-    @commands.has_role('Officer')
+    @commands.has_any_role(*roles)
     async def config(ctx, *args):
         result = snCommands.executeCommand("CONFIG", args)
         if await snBot_Helpers.is_result_valid(ctx, result):

@@ -23,6 +23,10 @@ def get_log_channel():
     channelID = snEvents.config.m_logsChannel
     return get_channel(channelID)
 
+def get_heartbeat_channel():
+    channelID = snEvents.config.m_heartbeatChannel
+    return get_channel(channelID)
+
 def get_channel(id):
     channel = snBot.bot.get_channel(id)
     if channel == None:

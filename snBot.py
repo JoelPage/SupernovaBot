@@ -1,4 +1,6 @@
 print("snBot.py")
+# Python
+import threading
 # Discord
 import discord
 from discord.ext import commands as commands
@@ -21,6 +23,8 @@ bot = commands.Bot(command_prefix='!')
 snBot_Callbacks.initialise(bot)
 snBot_Commands.initialise(bot)
 
+isAlive = False
+
 # Offline Mode - Debugging Only
 def run_offline():
     command = input.gatherInput()
@@ -41,21 +45,36 @@ def run_online():
 async def start_async():
     # WARNING : HARD CODE INTERVAL OF 5 SECONDS
     interval = 5
+    heartbeat = 60
     nowStr = snHelpers.get_now_time_string()
-    await snBot_Output.send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.")
+    await snBot_Output.send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.\nHeart beating every {heartbeat} seconds.")
     await bot.wait_until_ready()
     # Re-initialise from an offline state
     # - Read and reactions that may have occured while offline
     await check_reactions_async()
     # - Refresh Embeds so they are present in the message cache
     await refresh_embeds_async()
+    # - Setup Heartbeat Loop
+    start_heartbeat(heartbeat)
     while True:
         await update_async()
         await snHelpers.sleep_async(interval)
 
+def start_heartbeat(heartbeat):
+    threading.Timer(heartbeat, start_heartbeat, heartbeat).start()
+    global isAlive 
+    isAlive = True
+
 # Update
 async def update_async():
+    await check_heartbeat_async()
     await check_events_async()
+
+async def check_heartbeat_async():
+    global isAlive
+    if isAlive == True:
+        await snBot_Output.post_heartbeat_async()
+        isAlive = False
 
 async def check_events_async():
     # Check for events that have ended

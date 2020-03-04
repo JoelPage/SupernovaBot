@@ -33,3 +33,11 @@ async def post_log_message_async(message):
         await channel.send(embed=embed)
     except Exception:
         pass
+
+async def post_heartbeat_async():
+    try:
+        nowStr = snHelpers.get_now_time_string()
+        channel = snBot_Helpers.get_heartbeat_channel()
+        await channel.send(f"{nowStr}")
+    except Exception:
+        pass

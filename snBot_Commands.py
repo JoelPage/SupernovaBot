@@ -19,7 +19,7 @@ def initialise(bot):
     @bot.command()
     @commands.has_any_role(*roles)
     async def version(ctx, *args):
-        await ctx.send("Supernova Bot v0.1.2")
+        await ctx.send("Supernova Bot v0.1.3")
 
     @bot.command()
     @commands.has_any_role(*roles)

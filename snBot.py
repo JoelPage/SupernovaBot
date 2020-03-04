@@ -61,7 +61,7 @@ async def start_async():
         await snHelpers.sleep_async(interval)
 
 def start_heartbeat(heartbeat):
-    threading.Timer(heartbeat, start_heartbeat, heartbeat).start()
+    threading.Timer(heartbeat, start_heartbeat, [heartbeat]).start()
     global isAlive 
     isAlive = True
 

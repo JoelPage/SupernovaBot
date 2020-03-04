@@ -39,3 +39,41 @@ Command results
 - Results contain two objects an Error and a Value.
 - Results returned by commands should check their error before attempting to access their value.
 - A Result's internal value will typically contain a dictionary of strings, usually in a Header/Body format.
+
+__**Bot Commands**__
+```- version
+- refresh
+- config
+- events
+- create
+- edit
+- skip```
+You can use the parameter **-h** to get extra info about a command.
+```!config -h```
+Commands have **Required** and **Optional** Parameters, Optional parameters can appear in **any order** but must be specified with a **dash** and their name before hand.
+!command ImRequired -optional ImOptional
+```!edit 543216 -descripton "New Description"```
+Useful Commands
+**-> Show all events**
+!events
+**-> Skip an event**
+!skip EventID
+```!skip 567890``` 
+**-> Create an event** 
+!create Name Time 
+```!create "Mount Hyjal" 23:30```
+Optional Parameters
+-description -start-date -end -end-date -image
+```!create "Mount Hyjal" 23:30 -description "Alt Run" -start-date 25/12 -end-date 31/2 -end 13:37 -image "doge.com/face.jpeg"```
+**-> Edit an event**
+!edit EventID OptionalParameters
+```!edit 567890 -name "New Name" -start 20:45```
+Optional Parameters
+-description -start-date -end -end-date -image
+```!edit -name "Mount Hyjal" -description "Alt Run" -start 23:30 -start-date 25/12 -end-date 31/2 -end 13:37 -image "doge.com/face.jpeg"```
+**-> Force a signup for a user**
+!edit EventID signup add/remove @User
+```!edit 567890 signup add @Smoo```
+Optional Parameters
+-reaction
+```!edit 567890 signup remove @Jnx -reaction Yes```

@@ -84,7 +84,9 @@ class Event():
         self.started = snXMLHelpers.get_value_bool(node, 'started')
         self.thumbnail = snXMLHelpers.get_value_text(node, 'thumbnail')
         self.image = snXMLHelpers.get_value_text(node, 'image')
-        self.description = snXMLHelpers.get_value_text(node, 'description')
+        desc = snXMLHelpers.get_value_text_if_exists(node, 'description')
+        if desc != None:
+            self.description = desc
         remindedNode = snXMLHelpers.get_node(node, 'reminded')
         snXMLHelpers.get_values_float(remindedNode, 'reminder', self.reminded)
         self.signupMessageID = snXMLHelpers.get_value_int(node, 'signupmessageid')

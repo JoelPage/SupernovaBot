@@ -56,7 +56,6 @@ def get_value_text(node, name):
 
 def get_value_int(node, name):
     valueNode = node.find(name)
-    print(valueNode)
     if valueNode != None:
         valueAsStr = valueNode.text
         return int(valueAsStr)

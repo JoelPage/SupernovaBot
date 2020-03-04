@@ -329,6 +329,25 @@ class Command_Config_Logs(commands.Command):
         manager.publish()
         return [ [ "Logs", f"Logs channel set to <#{args.channel}>" ] ]
 
+class Command_Config_Heartbeat(commands.Command):
+    def __init__(self):
+        self.name = "heartbeat"
+
+    requiredArgs = [
+        Argument("channel", type=parse_types.parse_channel, help="The name of the channel that heartbeats will be posted to")
+    ]
+
+    def execute(self, args):
+        parsedArgs = self.parseArgs(args)
+        return self.executeInternal(parsedArgs)
+
+    def executeInternal(self, args):
+        # Validate Channel? Maybe do that at a higher level?
+        manager.m_config.m_heartbeatChannel= args.channel
+        manager.publish()
+        return [ [ "Heartbeat", f"Heartbeat channel set to <#{args.channel}>" ] ]
+
+
 class Command_Config_Timezone(commands.Command):
     def __init__(self):
         self.name = "timezone"
@@ -411,6 +430,7 @@ class Command_Config(commands.Command):
         Command_Config_Signup(),
         Command_Config_Logs(),
         Command_Config_Debug(),
+        Command_Config_Heartbeat(),
         # Reminders
         Command_Config_Reminder(),
         # Time
@@ -429,7 +449,8 @@ class Command_Config(commands.Command):
         channelsContent = f"""Announcements : <#{manager.m_config.m_announcementChannel}>
                               Signups       : <#{manager.m_config.m_signupChannel}>
                               Logs          : <#{manager.m_config.m_logsChannel}>
-                              Debug         : <#{manager.m_config.m_debugChannel}>"""
+                              Debug         : <#{manager.m_config.m_debugChannel}>
+                              Heartbeat     : <#{manager.m_config.m_heartbeatChannel}>"""
         channelsData = [channelsHeading, channelsContent]
         # Sort Order
         sortOrderHeading = "Sort Order"

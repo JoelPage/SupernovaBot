@@ -14,6 +14,7 @@ class Config():
         self.m_announcementChannel = 0
         self.m_signupChannel = 0
         self.m_logsChannel = 0
+        self.m_heartbeatChannel = 0
         # Sort Order
         self.m_isAscendingSort = False
         # Time
@@ -42,6 +43,7 @@ class Config():
         snXMLHelpers.create_and_set_node_text_int(configNode, 'signups', self.m_signupChannel)
         snXMLHelpers.create_and_set_node_text_int(configNode, 'logs', self.m_logsChannel)
         snXMLHelpers.create_and_set_node_text_int(configNode, 'debug', self.m_debugChannel)
+        snXMLHelpers.create_and_set_node_text_int(configNode, 'heartbeat', self.m_heartbeatChannel)
         snXMLHelpers.create_and_set_node_text_bool(configNode, 'ascendingsort', self.m_isAscendingSort)
         snXMLHelpers.create_and_set_node_text_float(configNode, 'utcoffset', self.m_utcOffset)
         snXMLHelpers.create_and_set_node_text(configNode, 'welcomemessage', self.m_welcomeMessage)
@@ -61,13 +63,26 @@ class Config():
 
     def deserialise(self, node):
         configNode = snXMLHelpers.get_node(node, 'config')        
-        self.m_signupChannel = snXMLHelpers.get_value_int(configNode, 'signups')
-        self.m_announcementChannel = snXMLHelpers.get_value_int(configNode, 'announcements')
-        self.m_logsChannel = snXMLHelpers.get_value_int(configNode, 'logs')
-        self.m_debugChannel = snXMLHelpers.get_value_int(configNode, 'debug')
+        sChannel = snXMLHelpers.get_value_int(configNode, 'signups')
+        if sChannel != None:
+            self.m_signupChannel = sChannel 
+        aChannel = snXMLHelpers.get_value_int(configNode, 'announcements')
+        if aChannel != None:
+            self.m_announcementChannel = aChannel
+        lChannel = snXMLHelpers.get_value_int(configNode, 'logs')
+        if lChannel != None:
+            self.m_logsChannel = lChannel
+        dChannel = snXMLHelpers.get_value_int(configNode, 'debug')
+        if dChannel != None: 
+            self.m_debugChannel = dChannel
+        hChannel = snXMLHelpers.get_value_int(configNode, 'heartbeat')
+        if hChannel != None:
+            self.m_heartbeatChannel = hChannel
         self.m_isAscendingSort = snXMLHelpers.get_value_bool(configNode, 'sortorder')
         self.m_utcOffset = snXMLHelpers.get_value_float(configNode, 'utcoffset')
-        self.m_welcomeMessage = snXMLHelpers.get_value_text(configNode, 'welcomemessage')
+        wMessage = snXMLHelpers.get_value_text(configNode, 'welcomemessage')
+        if wMessage != None:
+            self.m_welcomeMessage = wMessage
         self.m_signupLimit = snXMLHelpers.get_value_int(configNode, 'signuplimit')
 
         remindersNode = snXMLHelpers.get_node(configNode, 'reminders')

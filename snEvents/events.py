@@ -8,7 +8,6 @@ import snEvents.helpers as helpers
 # Classes
 Event = event.Event
 # Variables
-events = manager.m_events
 config = manager.m_config
 # Functions
 check_events = manager.check_events

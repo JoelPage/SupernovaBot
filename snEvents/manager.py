@@ -22,7 +22,7 @@ Reminder = snReminder.Reminder
 # Could we use a Dictionary ?
 # Maybe if looping gets slow
 m_xmlFilePath = "events.xml"
-m_events = []
+m_events = [] # TODO : use a class and not a global variable
 m_exit = False
 m_onEventDeletedAsync = helpers.delegate1
 m_onEventCreatedAsync = helpers.delegate1
@@ -51,13 +51,12 @@ def create_config_from_tree(root):
     m_config.deserialise(root)
 
 def create_events_from_tree(root):
-    global m_events
-    m_events.clear()
+    clear_events()
     for eventsNode in root.findall("events"):
         for eventNode in eventsNode.findall("event"):
             newEvent = Event("Awaiting Deserialisation", helpers.get_now_offset())
             newEvent.deserialise(eventNode)
-            m_events.append(newEvent)
+            add_event(newEvent)
 
     sort_events()
 
@@ -232,6 +231,18 @@ def get_events():
         return reversed(m_events)
     else:
         return m_events
+
+def get_num_events():
+    global m_events
+    return len(m_events)
+
+def add_event(event):
+    global m_events
+    m_events.append(event)
+
+def clear_events():
+    global m_events
+    m_events.clear()
 
 def get_signup_channel_id():
     return m_config.m_signupChannel

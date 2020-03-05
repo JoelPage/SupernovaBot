@@ -11,8 +11,6 @@ import snEvents.manager as manager
 import snEvents.parse_types as parse_types
 import snEvents.helpers as helpers
 import snEvents.reminder as snReminder
-# Variable Aliases
-m_events = manager.m_events
 # Class Aliases
 Event = snEvent.Event
 Argument = commands.Argument
@@ -39,9 +37,9 @@ class Command_Events(commands.Command):
         super().__init__("EVENTS")
 
     def execute(self, args):
-        results = [f"There are {len(m_events)} events:", ""]
+        results = [f"There are {manager.get_num_events()} events:", ""]
         now = helpers.get_now_offset()
-        for event in m_events:
+        for event in manager.get_events():
             if event.start > now:
                 timeDelta = event.start - now
                 timeStr = time_delta_to_string(timeDelta)
@@ -124,7 +122,7 @@ class Command_Create(commands.Command):
             for emoji in manager.m_config.m_reactions.keys():
                 signups[emoji] = []
 
-            m_events.append(newEvent)
+            manager.add_event(newEvent)
             manager.publish()
 
             results = [f"New event created :id: {newEvent.id}"] 

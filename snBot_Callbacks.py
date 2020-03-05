@@ -25,7 +25,7 @@ def initialise(bot):
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        for event in snEvents.events:
+        for event in snEvents.get_events():
             if event.signupMessageID != reaction.message.id:
                 continue
             if snBot_Helpers.is_event_locked(event):

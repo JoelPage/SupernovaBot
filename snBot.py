@@ -103,7 +103,7 @@ async def check_reactions_async():
     reactionsLogBuffer = ""
     try:        
         # For Each Message
-        for event in snEvents.events:
+        for event in snEvents.get_events():
             if snBot_Helpers.is_event_locked(event):
                 continue
             if event.signupMessageID != None:

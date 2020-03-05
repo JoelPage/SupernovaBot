@@ -17,26 +17,29 @@ roles = ['Officer', 'Classleader', 'Servant']
 def check_valid_users(ctx):
     # Extend to loop if more than pipini.
     # TODO expose in config 
-    return ctx.message.author.id == 367675059243974656
+    isValidRole = False
+    for validRole in roles:
+        for userRole in ctx.message.author.roles:
+            if userRole.name == validRole:
+                isValidRole = True
+    isPipini = ctx.message.author.id == 367675059243974656
+    return isPipini or isValidRole
 
 def initialise(bot):
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def version(ctx, *args):
         await ctx.send("Supernova Bot v0.1.3")
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def refresh(ctx, *args):
         await snBot.refresh_async()
         await ctx.send("Refresh Complete")
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def create(ctx, *args):
         result = snCommands.executeCommand("CREATE", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -45,7 +48,6 @@ def initialise(bot):
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def skip(ctx, *args):
         result = snCommands.executeCommand("SKIP", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -54,7 +56,6 @@ def initialise(bot):
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def edit(ctx, *args):
         result = snCommands.executeCommand("EDIT", args)
 
@@ -112,7 +113,6 @@ def initialise(bot):
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def events(ctx, *args):
         result = snCommands.executeCommand("EVENTS", args)
         if await snBot_Helpers.is_result_valid(ctx, result):
@@ -122,7 +122,6 @@ def initialise(bot):
 
     @bot.command()
     @commands.check(check_valid_users)
-    @commands.has_any_role(*roles)
     async def config(ctx, *args):
         result = snCommands.executeCommand("CONFIG", args)
         if await snBot_Helpers.is_result_valid(ctx, result):

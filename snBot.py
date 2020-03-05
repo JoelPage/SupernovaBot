@@ -45,7 +45,7 @@ def run_online():
 async def start_async():
     # WARNING : HARD CODE INTERVAL OF 5 SECONDS
     interval = 5
-    heartbeat = 60
+    heartbeat = 900
     nowStr = snHelpers.get_now_time_string()
     await snBot_Output.send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.\nHeart beating every {heartbeat} seconds.")
     await bot.wait_until_ready()
@@ -85,7 +85,8 @@ async def check_events_async():
     snEvents.manager.m_removedEvents.clear()
     # Ending
     if results[0] != None and len(results[0]) > 1:
-        await snBot_Output.send_debug_message_async(results[0])
+        embed = discord.Embed(title=results[0][0], description=results[0][1:])
+        await snBot_Output.send_debug_embed_async(embed)
     # Starting
     if results[1] != None and len(results[1]) > 1:
         for result in results[1][1:]:

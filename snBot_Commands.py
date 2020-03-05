@@ -14,20 +14,28 @@ snHelpers = snEvents.helpers
 # Permission Roles
 roles = ['Officer', 'Classleader', 'Servant']
 
+def check_valid_users(ctx):
+    # Extend to loop if more than pipini.
+    # TODO expose in config 
+    return ctx.message.author.id == 367675059243974656
+
 def initialise(bot):
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def version(ctx, *args):
         await ctx.send("Supernova Bot v0.1.3")
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def refresh(ctx, *args):
         await snBot.refresh_async()
         await ctx.send("Refresh Complete")
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def create(ctx, *args):
         result = snCommands.executeCommand("CREATE", args)
@@ -36,6 +44,7 @@ def initialise(bot):
             await snBot.refresh_async()
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def skip(ctx, *args):
         result = snCommands.executeCommand("SKIP", args)
@@ -44,15 +53,23 @@ def initialise(bot):
             await snBot.refresh_async()
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def edit(ctx, *args):
         result = snCommands.executeCommand("EDIT", args)
-        print("Result recieved")
+
         if await snBot_Helpers.is_result_valid(ctx, result):
             # This command has a subcommand for editing the signups for an event.
             # WARNING : This is a hack to make add/remove work without refactoring
             # commands to be async or changing how commands and results work in general!
-            if result.value.subname == "signup":
+                    
+            isSubCommand = False
+            try:
+                isSubCommand = (result.value.subname == "signup")
+            except Exception:
+                pass
+
+            if isSubCommand:
                 # Validate Event
                 event = snEvents.manager.find_event_by_id(result.value.UID)
                 if event == None:
@@ -76,24 +93,25 @@ def initialise(bot):
                         return
                     
                     event.signups[userID] = reaction            
-                    print(f"Reaction {reaction} set for User <@!{userID}>")
+                    await snBot_Helpers.context_send_codeblock(ctx, f"Reaction {reaction} set for User <@!{userID}>")
                     await snBot.refresh_async()
                 else:
                     # If a reaction wasn't provided, remove the users existing reaction
                     if reaction == None:
                         event.signups.pop(userID)
-                        print(f"Reaction removed for User <@!{userID}>")
+                        await snBot_Helpers.context_send_codeblock(ctx, f"Reaction removed for User <@!{userID}>")
                         await snBot.refresh_async()
                     else:
                         if reaction == event.signups[userID]:
                             event.signups.pop(userID)                
-                            print(f"Reaction {reaction} removed for User <@!{userID}>")
+                            await snBot_Helpers.context_send_codeblock(ctx, f"Reaction {reaction} removed for User <@!{userID}>")
                             await snBot.refresh_async()
             else:
                 await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
                 await snBot.refresh_async()
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def events(ctx, *args):
         result = snCommands.executeCommand("EVENTS", args)
@@ -103,6 +121,7 @@ def initialise(bot):
             await ctx.send(embed=embed)
 
     @bot.command()
+    @commands.check(check_valid_users)
     @commands.has_any_role(*roles)
     async def config(ctx, *args):
         result = snCommands.executeCommand("CONFIG", args)

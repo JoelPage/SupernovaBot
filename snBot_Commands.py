@@ -1,13 +1,14 @@
 print("snBot_Commands.py")
 # Discord
 import discord
-from discord.ext import commands as commands
+import snBot
+import snBot_Helpers
+import snBot_Output
 # Supernova
 import snCommands.commands as snCommands
-import snBot
-import snBot_Output
-import snBot_Helpers
 import snEvents.events as snEvents
+from discord.ext import commands as commands
+
 # Aliases
 snHelpers = snEvents.helpers
 
@@ -71,6 +72,7 @@ def initialise(bot):
                 pass
 
             if isSubCommand:
+                print("SubCommand")
                 # Validate Event
                 event = snEvents.manager.find_event_by_id(result.value.UID)
                 if event == None:
@@ -108,8 +110,12 @@ def initialise(bot):
                             await snBot_Helpers.context_send_codeblock(ctx, f"Reaction {reaction} removed for User <@!{userID}>")
                             await snBot.refresh_async()
             else:
+                print("Main Command")
                 await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
                 await snBot.refresh_async()
+        else:
+            print("Error")
+            await snBot_Output.send_debug_message_async(f"{result.error}")
 
     @bot.command()
     @commands.check(check_valid_users)

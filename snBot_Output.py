@@ -19,12 +19,15 @@ async def send_debug_message_async(message):
         pass
 
 async def send_debug_embed_async(embed):
+    print("Send Debug Embed")
     try:
         channel = snBot_Helpers.get_debug_channel()
+        print("Sending Debug Embed")
         await channel.send(embed=embed)
     except Exception:
+        print("Exception")
         pass
-    
+
 async def post_announcement_message_async(message):
     try:
         channel = snBot_Helpers.get_announcement_channel()

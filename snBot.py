@@ -84,8 +84,13 @@ async def check_events_async():
         await on_event_deleted_async(removedEvent.signupMessageID)
     snEvents.manager.m_removedEvents.clear()
     # Ending
-    if results[0] != None and len(results[0]) > 1:
-        embed = discord.Embed(title=results[0][0], description=results[0][1:])
+    if results[0] != None:
+        print("Results Found Ending")
+        title = f"{results[0][0]}"
+        desc = ""
+        for event in results[0][1:]:
+            desc = f"{desc}{event}"
+        embed = discord.Embed(title=title, description=desc)
         await snBot_Output.send_debug_embed_async(embed)
     # Starting
     if results[1] != None and len(results[1]) > 1:

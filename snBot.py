@@ -140,7 +140,7 @@ async def check_reactions_async():
 
 async def refresh_embeds_async():
     try:
-        sChannel = snBot_Helpers.get_channel(snEvents.get_signup_channel_id())
+        sChannel = snBot_Helpers.get_signup_channel()
         await sChannel.purge(limit=None, check=lambda msg: not msg.pinned)
         splitSignups = {}
         for value in snEvents.config.m_reactions.values():
@@ -172,14 +172,30 @@ async def refresh_embeds_async():
             for key, value in splitSignups.items():
                 emoji = snEvents.config.findReaction(key)
                 fName = f'**{emoji} {key} {len(value)}**'
-
                 fValue = ""
+                max = 5
+                count = 0
+                total = 0
                 for userId in value:
+                    count += 1
+                    # Add to field string
                     fValue = f"{fValue}<@{userId}>\n"
-                if fValue == "":
+                    # If we hit the maximum then create a field.
+                    if count == max:
+                        embed.add_field(name=fName, value=fValue, inline=True)
+                        fName = "_"
+                        fValue = ""
+                        count = 0
+                        total += count
+
+                total += count
+                if total == 0:
                     fValue = "Nobody"
-                embed.add_field(name=fName, value=fValue, inline=True)
-                eventEmbeds[event] = embed
+                    embed.add_field(name=fName, value=fValue)
+                elif count > 0:
+                    embed.add_field(name=fName, value=fValue)
+
+            eventEmbeds[event] = embed
 
         messages = []
         for key, value in eventEmbeds.items():
@@ -194,8 +210,8 @@ async def refresh_embeds_async():
 
         snEvents.manager.publish()
 
-    except Exception:
-        await snBot_Output.send_debug_message_async(f"Discord error not found. Check channel ids in config.")
+    except Exception as e:
+        await snBot_Output.send_debug_message_async(f"Exception thrown {e}")
 
 # Callbacks
 async def on_event_deleted_async(signupMessageID):

@@ -64,6 +64,8 @@ def initialise(bot):
             splitSignups = {}
             for value in snEvents.config.m_reactions.values():
                 splitSignups[value] = []
+            for key, value in event.signups.items():
+                splitSignups[value].append(key)
             for key, value in splitSignups.items():
                 emoji = snEvents.config.findReaction(key)
                 fName = f'**{emoji} {key} {len(value)}**'

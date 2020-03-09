@@ -36,7 +36,7 @@ class Command_Events(commands.Command):
     def __init__(self):
         super().__init__("EVENTS")
 
-    def execute(self, args):
+    def executeInternal(self, args):
         results = [f"There are {manager.get_num_events()} events:", ""]
         now = helpers.get_now_offset()
         for event in manager.get_events():
@@ -51,7 +51,7 @@ class Command_Events(commands.Command):
                     results[1] = f"{results[1]}:id:`{event.id}` ~ **{event.name}** Ends in {timeStr}\n"
                 else:
                     results[1] = f"{results[1]}:id:`{event.id}` ~ **{event.name}** event has no end\n"
-        return Result(value=results)
+        return results
 
 Command_Events()
 
@@ -74,68 +74,63 @@ class Command_Create(commands.Command):
         Argument("thumbnail", help="Set the event thumbnail. Format : 'String in quotes'")
     ]
 
-    def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            now = helpers.get_now_offset()
-            # Validate Start
-            start = parsedArgs.start
-            start_date = parsedArgs.start_date
-            if start_date != None:
-                gmStartDate = time.gmtime(start_date.timestamp())
-                start = start.replace(year=gmStartDate.tm_year, month=gmStartDate.tm_mon, day=gmStartDate.tm_mday)
-            if start < now:
-                raise Exception("Start time is in the past!")
-            # Validate End
-            end = parsedArgs.end
-            end_date = parsedArgs.end_date            
-            if end != None and end_date == None: 
-                gmStart = time.gmtime(start.timestamp())
-                end = end.replace(year=gmStart.tm_year, month=gmStart.tm_mon, day=gmStart.tm_mday)
-            elif end == None and end_date != None:
-                gmStart = time.gmtime(start.timestamp())
-                end = end.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
-            elif end != None and end_date != None:
-                gmEnd = time.gmtime(end.timestamp())
-                end = end_date.replace(hour=gmEnd.tm_hour, minute=gmEnd.tm_min)
-            if end != None and end < start:
-                raise Exception("End time is before start!")
-                
-            thumbnail = parsedArgs.thumbnail
-            if thumbnail == None:
-                thumbnail = manager.m_config.m_thumbnails[start.weekday()]
+    def executeInternal(self, args):
+        now = helpers.get_now_offset()
+        # Validate Start
+        start = args.start
+        start_date = args.start_date
+        if start_date != None:
+            gmStartDate = time.gmtime(start_date.timestamp())
+            start = start.replace(year=gmStartDate.tm_year, month=gmStartDate.tm_mon, day=gmStartDate.tm_mday)
+        if start < now:
+            raise Exception("Start time is in the past!")
+        # Validate End
+        end = args.end
+        end_date = args.end_date            
+        if end != None and end_date == None: 
+            gmStart = time.gmtime(start.timestamp())
+            end = end.replace(year=gmStart.tm_year, month=gmStart.tm_mon, day=gmStart.tm_mday)
+        elif end == None and end_date != None:
+            gmStart = time.gmtime(start.timestamp())
+            end = end.replace(hour=gmStart.tm_hour, minute=gmStart.tm_min)
+        elif end != None and end_date != None:
+            gmEnd = time.gmtime(end.timestamp())
+            end = end_date.replace(hour=gmEnd.tm_hour, minute=gmEnd.tm_min)
+        if end != None and end < start:
+            raise Exception("End time is before start!")
             
-            image = parsedArgs.image
+        thumbnail = args.thumbnail
+        if thumbnail == None:
+            thumbnail = manager.m_config.m_thumbnails[start.weekday()]
+        
+        image = args.image
 
-            newEvent = Event(parsedArgs.name, start, end=end, 
-            description=parsedArgs.description, image=image, thumbnail=thumbnail)
-            
-            # If event is started past a reminder time, set as reminded
-            for reminder in manager.m_config.m_reminders:
-                reminderDelta = timedelta(hours=reminder.hours)
-                reminderTime = newEvent.start - reminderDelta
-                if reminderTime < now:
-                    print(f"Adding Reminded for {reminder.hours}")
-                    newEvent.reminded.append(reminder.hours)
+        newEvent = Event(args.name, start, end=end, 
+        description=args.description, image=image, thumbnail=thumbnail)
+        
+        # If event is started past a reminder time, set as reminded
+        for reminder in manager.m_config.m_reminders:
+            reminderDelta = timedelta(hours=reminder.hours)
+            reminderTime = newEvent.start - reminderDelta
+            if reminderTime < now:
+                print(f"Adding Reminded for {reminder.hours}")
+                newEvent.reminded.append(reminder.hours)
 
-            signups = {}
-            for emoji in manager.m_config.m_reactions.keys():
-                signups[emoji] = []
+        signups = {}
+        for emoji in manager.m_config.m_reactions.keys():
+            signups[emoji] = []
 
-            manager.add_event(newEvent)
-            manager.publish()
+        manager.add_event(newEvent)
+        manager.publish()
 
-            results = [f"New event created :id: {newEvent.id}"] 
-            results.append(f'Title: "{newEvent.name}"\nStart: {newEvent.start}\nEnd: {newEvent.end}\nDescription: "{newEvent.description}"')
-            if newEvent.thumbnail != None:
-                results[1] = f"{results[1]}\nThumbnail: '{newEvent.thumbnail}'"
-            if newEvent.image != None:
-                results[1] = f'{results[1]}\nImage: "{newEvent.image}"'
+        results = [f"New event created :id: {newEvent.id}"] 
+        results.append(f'Title: "{newEvent.name}"\nStart: {newEvent.start}\nEnd: {newEvent.end}\nDescription: "{newEvent.description}"')
+        if newEvent.thumbnail != None:
+            results[1] = f"{results[1]}\nThumbnail: '{newEvent.thumbnail}'"
+        if newEvent.image != None:
+            results[1] = f'{results[1]}\nImage: "{newEvent.image}"'
 
-            return Result(value=results)
-
-        except Exception as e:
-            return Result(error=e.args[0])
+        return results
 
 Command_Create()
 
@@ -147,13 +142,9 @@ class Command_Skip(commands.Command):
         Argument("UID", type=parse_types.parse_uid, help="The UID of the Event to Skip")
     ]
 
-    def execute(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            result = manager.remove_event_by_id(parsedArgs.UID)
-            return Result(value=result)
-        except Exception as e:
-            return Result(error=e.args)
+    def executeInternal(self, args):
+        result = manager.remove_event_by_id(args.UID)
+        return result
 
 Command_Skip()
 
@@ -199,51 +190,48 @@ class Command_Edit(commands.Command):
     ]
 
     def executeInternal(self, args):
-        try:
-            parsedArgs = self.parseArgs(args)
-            foundEvent = manager.find_event_by_id(parsedArgs.UID)
-            if foundEvent == None:
-                raise Exception(f"No event found with ID {parsedArgs.UID}")
-            foundEvent.isDirty = True
-            # String Updates
-            if parsedArgs.name != None:
-                foundEvent.name = parsedArgs.name
-            if parsedArgs.description != None:
-                foundEvent.description = parsedArgs.description
-            if parsedArgs.image != None:
-                foundEvent.image = parsedArgs.image
-            if parsedArgs.thumbnail != None:
-                foundEvent.thumbnail = parsedArgs.thumbnail
-            # Time Updates            
-            now = helpers.get_now_offset()
-            # Start
-            start = helpers.merge_time_with_date_base(foundEvent.start, parsedArgs.start, parsedArgs.start_date)
-            if start != foundEvent.start:
-                if start < now:
-                    raise Exception(f"Start time is in the past!")
-            # End
-            end = foundEvent.end
-            if parsedArgs.end != None or parsedArgs.end_date != None:
-                baseEnd = end
-                if end == None:
-                    baseEnd = start
-                end = helpers.merge_time_with_date_base(baseEnd, parsedArgs.end, parsedArgs.end_date)
-            if end != None:
-                if end < start:
-                    raise Exception(f"End is before start")
-            foundEvent.start = start
-            foundEvent.end = end
+        print("Edit Command - Execute Internal")
+        foundEvent = manager.find_event_by_id(args.UID)
+        if foundEvent == None:
+            raise Exception(f"No event found with ID {args.UID}")
+        foundEvent.isDirty = True
+        # String Updates
+        if args.name != None:
+            foundEvent.name = args.name
+        if args.description != None:
+            foundEvent.description = args.description
+        if args.image != None:
+            foundEvent.image = args.image
+        if args.thumbnail != None:
+            foundEvent.thumbnail = args.thumbnail
+        # Time Updates            
+        now = helpers.get_now_offset()
+        # Start
+        start = helpers.merge_time_with_date_base(foundEvent.start, args.start, args.start_date)
+        if start != foundEvent.start:
+            if start < now:
+                raise Exception(f"Start time is in the past!")
+        # End
+        end = foundEvent.end
+        if args.end != None or args.end_date != None:
+            baseEnd = end
+            if end == None:
+                baseEnd = start
+            end = helpers.merge_time_with_date_base(baseEnd, args.end, args.end_date)
+        if end != None:
+            if end < start:
+                raise Exception(f"End is before start")
+        foundEvent.start = start
+        foundEvent.end = end
 
-            manager.publish()
-            results = [f"Updated event :id: {foundEvent.id}"] 
-            results.append(f'Title: "{foundEvent.name}"\nStart: {foundEvent.start}\nEnd: {foundEvent.end}\nDescription: "{foundEvent.description}"')
-            if foundEvent.thumbnail != None:
-                results[1] = f"{results[1]}\nThumbnail: '{foundEvent.thumbnail}'"
-            if foundEvent.image != None:
-                results[1] = f'{results[1]}\nImage: "{foundEvent.image}"'
-            return Result(value=results)
-        except Exception as e:
-            return Result(error=e.args[0])
+        manager.publish()
+        results = [f"Updated event :id: {foundEvent.id}"] 
+        results.append(f'Title: "{foundEvent.name}"\nStart: {foundEvent.start}\nEnd: {foundEvent.end}\nDescription: "{foundEvent.description}"')
+        if foundEvent.thumbnail != None:
+            results[1] = f"{results[1]}\nThumbnail: '{foundEvent.thumbnail}'"
+        if foundEvent.image != None:
+            results[1] = f'{results[1]}\nImage: "{foundEvent.image}"'
+        return results
 
 Command_Edit()
 
@@ -282,10 +270,6 @@ class Command_Config_Announcement(commands.Command):
         Argument("channel", type=parse_types.parse_channel, help="The name of the channel that announcements will be posted to")
     ]
 
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
-
     def executeInternal(self, args):
         manager.m_config.m_announcementChannel = args.channel
         manager.publish()
@@ -298,10 +282,6 @@ class Command_Config_Signup(commands.Command):
     requiredArgs = [
         Argument("channel", type=parse_types.parse_channel, help="The name of the channel that signups will be posted to")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?
@@ -317,10 +297,6 @@ class Command_Config_Logs(commands.Command):
         Argument("channel", type=parse_types.parse_channel, help="The name of the channel that logs will be posted to")
     ]
 
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
-
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?
         manager.m_config.m_logsChannel = args.channel
@@ -334,10 +310,6 @@ class Command_Config_Heartbeat(commands.Command):
     requiredArgs = [
         Argument("channel", type=parse_types.parse_channel, help="The name of the channel that heartbeats will be posted to")
     ]
-
-    def execute(self, args):
-        parsedArgs = self.parseArgs(args)
-        return self.executeInternal(parsedArgs)
 
     def executeInternal(self, args):
         # Validate Channel? Maybe do that at a higher level?

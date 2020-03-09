@@ -23,8 +23,8 @@ class Config():
         # Signups
         self.m_reactions = { 
             "✅" : "Yes",
-            "❌" : "No",
-            "❔" : "Unsure" }
+            "❔" : "Unsure",
+            "❌" : "No" }
         # Default Daily Thumbnails
         self.m_thumbnails = [
             "https://i.imgur.com/sBFpHZ5.png", # Monday

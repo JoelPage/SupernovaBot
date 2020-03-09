@@ -172,28 +172,21 @@ async def refresh_embeds_async():
             for key, value in splitSignups.items():
                 emoji = snEvents.config.findReaction(key)
                 fName = f'**{emoji} {key} {len(value)}**'
-                fValue = ""
-                max = 5
-                count = 0
-                total = 0
+                fValues = [ "", "", "" ]
+                maxColumns = 3
+                currentColumn = 0
                 for userId in value:
-                    count += 1
-                    # Add to field string
-                    fValue = f"{fValue}<@{userId}>\n"
-                    # If we hit the maximum then create a field.
-                    if count == max:
-                        embed.add_field(name=fName, value=fValue, inline=True)
-                        fName = "_"
-                        fValue = ""
-                        count = 0
-                        total += count
+                    fValue = fValues[currentColumn]
+                    fValues[currentColumn] = f"{fValue}<@{userId}>\n"
+                    currentColumn += 1
+                    if currentColumn >= maxColumns:
+                        currentColumn = 0
 
-                total += count
-                if total == 0:
-                    fValue = "Nobody"
-                    embed.add_field(name=fName, value=fValue)
-                elif count > 0:
-                    embed.add_field(name=fName, value=fValue)
+                for value in fValues:
+                    if value == "":
+                        value = "..."
+                    embed.add_field(name=fName, value=value)
+                    fName = "..."
 
             eventEmbeds[event] = embed
 

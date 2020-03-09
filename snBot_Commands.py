@@ -31,7 +31,15 @@ def initialise(bot):
     @bot.command()
     @commands.check(check_valid_users)
     async def version(ctx, *args):
-        await ctx.send("Supernova Bot v0.1.3")
+        await ctx.send("This command is deprecated, use !info instead.")
+
+    @bot.command()
+    @commands.check(check_valid_users)
+    async def info(ctx, *args):
+        title = "Info"
+        desc = "Supernova Bot v0.1.4\n"
+        embed = discord.Embed(title=title, description=desc)
+        await ctx.send(embed=embed)
 
     @bot.command()
     @commands.check(check_valid_users)

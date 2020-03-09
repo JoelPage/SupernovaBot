@@ -64,18 +64,24 @@ def initialise(bot):
             splitSignups = {}
             for value in snEvents.config.m_reactions.values():
                 splitSignups[value] = []
-            for key, value in event.signups.items():
-                splitSignups[value].append(key)
             for key, value in splitSignups.items():
                 emoji = snEvents.config.findReaction(key)
                 fName = f'**{emoji} {key} {len(value)}**'
-
-                fValue = ""
+                fValues = [ "", "", "" ]
+                maxColumns = 3
+                currentColumn = 0
                 for userId in value:
-                    fValue = f"{fValue}<@{userId}>\n"
-                if fValue == "":
-                    fValue = "Nobody"
-                embed.add_field(name=fName, value=fValue, inline=True)                
+                    fValue = fValues[currentColumn]
+                    fValues[currentColumn] = f"{fValue}<@{userId}>\n"
+                    currentColumn += 1
+                    if currentColumn >= maxColumns:
+                        currentColumn = 0
+
+                for value in fValues:
+                    if value == "":
+                        value = "..."
+                    embed.add_field(name=fName, value=value)
+                    fName = "..."
             # Apply the new Embed
             await reaction.message.edit(embed=embed)
 

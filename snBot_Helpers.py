@@ -37,30 +37,26 @@ def get_channel(id):
 async def fetch_message_async(channel, id):
     message = await channel.fetch_message(id)
     if message == None:
-        print(f"fetch_message_async({id}) == None")
         raise Exception(f"Channel with id {id} not found.")
     return message
 
-async def is_result_valid(ctx, result):
+async def is_result_valid_async(ctx, result):
     if result.error != None:
-        await context_send_codeblock(ctx, result.error)
+        await context_send_codeblock_async(ctx, result.error)
         return False
     else:
         return True
 
-async def context_send_codeblock(ctx, message):
+async def context_send_codeblock_async(ctx, message):
     await ctx.send(f"```{message}```")
 
 def is_event_locked(event):
     now = snEvents.helpers.get_now_offset()
     if now > event.start:
-        print(f"{now} > {event.start}")
         return True # already started
     signupLimitDelta = datetime.timedelta(hours=snEvents.config.m_signupLimit)
     lockTime = event.start - signupLimitDelta
     if now > lockTime:
-        print(f"{now} > {lockTime}")
         return True # event isn't locked
-    print("Event not locked")
     return False
     

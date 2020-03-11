@@ -42,7 +42,7 @@ def deserialise():
         eventsTree = xml_helpers.fileRead(m_xmlFilePath)
         create_config_from_tree(eventsTree.getroot())
         create_events_from_tree(eventsTree.getroot())
-    except Exception as e:
+    except Exception:
         helpers.debug_print("Failed to read xml, recreating with defaults")
         publish()
 
@@ -176,8 +176,11 @@ def check_events():
     startCheckResults = check_events_starting()
     results.append(startCheckResults)
     # Reminder Check
-    reminderCheckResults = check_event_reminders()
+    reminderCheckResults = check_events_reminders()
     results.append(reminderCheckResults)
+    # Lock Check
+    lockCheckResults = check_events_lock()
+    results.append(lockCheckResults)
 
     return results
 
@@ -208,7 +211,7 @@ def check_events_starting():
     else:
         return None
 
-def check_event_reminders():
+def check_events_reminders():
     reminderResults = ["Events that have a reminder."]
     now = helpers.get_now_offset()
     for reminder in m_config.m_reminders:
@@ -223,6 +226,21 @@ def check_event_reminders():
     if len(reminderResults) > 1:    
         publish()
         return reminderResults
+    else:
+        return None
+
+def check_events_lock():
+    checkResults = []
+    isDirty = False
+    for event in m_events:
+        if event.locked == False:
+            if is_event_locked(event):
+                event.locked = True
+                checkResults.append(event)
+                isDirty = True
+    if isDirty:
+        publish()
+        return checkResults
     else:
         return None
 
@@ -246,5 +264,16 @@ def clear_events():
 
 def get_signup_channel_id():
     return m_config.m_signupChannel
+
+def is_event_locked(event):
+    now = snEventHelpers.get_now_offset()
+    if now > event.start:
+        return True # already started
+    signupLimitDelta = timedelta(hours=snConfig.m_config.m_signupLimit)
+    lockTime = event.start - signupLimitDelta
+    if now > lockTime:
+        return True # event isn't locked
+    return False
+
 
 initialise()

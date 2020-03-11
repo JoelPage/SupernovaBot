@@ -77,6 +77,7 @@ async def check_heartbeat_async():
         isAlive = False
 
 async def check_events_async():
+    # TODO : Use defined return structure from check_events
     # Check for events that have ended
     results = snEvents.check_events()
     # Remove embeds for events that have finished
@@ -85,7 +86,6 @@ async def check_events_async():
     snEvents.manager.m_removedEvents.clear()
     # Ending
     if results[0] != None:
-        print("Results Found Ending")
         title = f"{results[0][0]}"
         desc = ""
         for event in results[0][1:]:
@@ -102,6 +102,13 @@ async def check_events_async():
         for result in results[2][1:]:
             reminderStr = f"@everyone {result}"
             await snBot_Output.post_announcement_message_async(reminderStr)
+    # Locked
+    if results[3] != None:
+        sChannel = snBot_Helpers.get_signup_channel()
+        for result in results [3]:
+            sMessage = await snBot_Helpers.fetch_message_async(sChannel, result.signupMessageID)
+            await sMessage.clear_reactions()
+            await snBot_Output.send_debug_message_async(f"Event {result.id} has been locked.")
 
 # TODO : Clean up this function, it's ugly AF
 async def check_reactions_async():

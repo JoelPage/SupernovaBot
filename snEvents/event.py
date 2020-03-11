@@ -13,6 +13,7 @@ class Event():
                 id=None, 
                 end=None, 
                 started=False, 
+                locked=False,
                 reminded=None, 
                 description=None, 
                 image=None, 
@@ -37,6 +38,7 @@ class Event():
 
         # Flags
         self.started = started
+        self.locked = locked
         self.isDirty = True
 
         # Array of Floats representing reminders
@@ -64,6 +66,7 @@ class Event():
         if self.end != None:
             snXMLHelpers.create_and_set_node_text_int(eventNode, 'end', self.end.timestamp())
         snXMLHelpers.create_and_set_node_text_bool(eventNode, 'started', self.started)
+        snXMLHelpers.create_and_set_node_text_bool(eventNode, 'locked', self.locked)
         snXMLHelpers.create_and_set_node_text_if_exists(eventNode, 'thumbnail', self.thumbnail)
         snXMLHelpers.create_and_set_node_text_if_exists(eventNode, 'image', self.image)
         snXMLHelpers.create_and_set_node_text_if_exists(eventNode, 'description', self.description)
@@ -82,6 +85,7 @@ class Event():
         self.start = snXMLHelpers.get_value_datetime(node, 'start')
         self.end = snXMLHelpers.get_value_datetime(node, 'end')
         self.started = snXMLHelpers.get_value_bool(node, 'started')
+        self.locked = snXMLHelpers.get_value_bool(node, 'locked')
         self.thumbnail = snXMLHelpers.get_value_text(node, 'thumbnail')
         self.image = snXMLHelpers.get_value_text(node, 'image')
         desc = snXMLHelpers.get_value_text(node, 'description')
@@ -99,6 +103,8 @@ class Event():
                 self.signups[userId] = reaction
 
     def get_embed_description(self):
+        # TODO : add time until
+        # TODO : add if this event is locked or not
         day = self.start.day
         month = self.start.month
         monthStr = snHelpers.get_month_as_string_abbr(month)

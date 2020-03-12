@@ -13,18 +13,20 @@ from discord.ext import commands as commands
 snHelpers = snEvents.helpers
 
 # Permission Roles
+# TODO : Make these defininable in the config.
 roles = ['Officer', 'Classleader', 'Servant']
+# TODO : Make these definable in the config.
+validUserIDs = [ 367675059243974656 ]
 
 def check_valid_users(ctx):
-    # Extend to loop if more than pipini.
     # TODO expose in config 
     isValidRole = False
     for validRole in roles:
         for userRole in ctx.message.author.roles:
             if userRole.name == validRole:
                 isValidRole = True
-    isPipini = ctx.message.author.id == 367675059243974656
-    return isPipini or isValidRole
+    isValidUser = ctx.message.author.id in validUserIDs
+    return isValidUser or isValidRole
 
 def initialise(bot):
 

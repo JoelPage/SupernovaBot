@@ -19,13 +19,11 @@ async def send_debug_message_async(message):
         pass
 
 async def send_debug_embed_async(embed):
-    print("Send Debug Embed")
     try:
         channel = snBot_Helpers.get_debug_channel()
-        print("Sending Debug Embed")
         await channel.send(embed=embed)
     except Exception:
-        print("Exception")
+        print("send_debug_embed_async() Exception")
         pass
 
 async def post_announcement_message_async(message):
@@ -42,6 +40,14 @@ async def post_log_message_async(message):
         embed = discord.Embed(title=f"Signup Log {nowStr}", description=message)
         await channel.send(embed=embed)
     except Exception:
+        pass
+
+async def post_log_embed_async(embed):
+    try:
+        channel = snBot_Helpers.get_log_channel()
+        await channel.send(embed)
+    except Exception:
+        print("post_log_embed_async() Exception")
         pass
 
 async def post_heartbeat_async():

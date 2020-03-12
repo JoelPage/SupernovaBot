@@ -45,7 +45,7 @@ def run_online():
 async def start_async():
     # WARNING : HARD CODE INTERVAL OF 5 SECONDS
     interval = 5
-    heartbeat = 900
+    heartbeat = 1800
     nowStr = snHelpers.get_now_time_string()
     await snBot_Output.send_debug_message_async(f"Systems Online! {nowStr}\nUpdate ticking every {interval} seconds.\nHeart beating every {heartbeat} seconds.")
     await bot.wait_until_ready()
@@ -81,8 +81,52 @@ async def check_events_async():
     # Check for events that have ended
     results = snEvents.check_events()
     # Remove embeds for events that have finished
-    for removedEvent in snEvents.manager.m_removedEvents:
-        await on_event_deleted_async(removedEvent.signupMessageID)
+    splitSignups = {}
+    for value in snEvents.config.m_reactions.values():
+        splitSignups[value] = []
+    for event in snEvents.manager.m_removedEvents:
+        # TODO : Remove this duplicate code, this is the 3rd instance of it.
+        description = event.get_embed_description()
+        embed = discord.Embed(title=f"{event.name}", description=description)
+        if event.thumbnail != None:
+            embed.set_thumbnail(url=event.thumbnail)
+        if event.image != None:
+            embed.set_image(url=event.image)
+        embed.set_footer(text=f"ID:{event.id}")
+
+        for value in splitSignups.values():
+            value.clear()
+
+        # Events store Emoji for each user.
+        # We need Users for each emoji to display counts
+        # User, Emoji
+        for key, value in event.signups.items():
+            splitSignups[value].append(key)
+
+        # Add a field for each emoji
+        # Emoji, Users
+        for key, value in splitSignups.items():
+            emoji = snEvents.config.findReaction(key)
+            fName = f'**{emoji} {key} {len(value)}**'
+            fValues = [ "", "", "" ]
+            maxColumns = 3
+            currentColumn = 0
+            for userId in value:
+                fValue = fValues[currentColumn]
+                fValues[currentColumn] = f"{fValue}<@{userId}>\n"
+                currentColumn += 1
+                if currentColumn >= maxColumns:
+                    currentColumn = 0
+
+            for value in fValues:
+                if value == "":
+                    value = "..."
+                embed.add_field(name=fName, value=value)
+                fName = "..."
+
+        await snBot_Output.post_log_embed_async(embed)
+        await on_event_deleted_async(event.signupMessageID)
+
     snEvents.manager.m_removedEvents.clear()
     # Ending
     if results[0] != None:
@@ -121,28 +165,31 @@ async def check_reactions_async():
                 continue
             if event.signupMessageID != None:
                 sChannel = snBot_Helpers.get_channel(snEvents.config.m_signupChannel)
-                sMessage = await snBot_Helpers.fetch_message_async(sChannel, event.signupMessageID)
-                # If the reaction is a recognised RVSP option
-                for reaction in sMessage.reactions:
-                    for emoji in snEvents.manager.m_config.m_reactions.keys():
-                        if reaction.emoji == emoji:
-                            users = await reaction.users().flatten()
-                            # RVSP the users that have selected that option
-                            for user in users:
-                                if user != bot.user:
-                                    if event.signups != None:
-                                        userSignup = None
-                                        try:
-                                            userSignup = event.signups[user.id]
-                                        except KeyError:
-                                            pass
-                                        reactionEmoji = snEvents.config.m_reactions[reaction.emoji]
-                                        if userSignup != reactionEmoji:
-                                            reactionStr = f"<@{user.id}> reacted to {event.name} with {reaction.emoji}"
-                                            reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
-                                            event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
+                try:
+                    sMessage = await snBot_Helpers.fetch_message_async(sChannel, event.signupMessageID)
+                    # If the reaction is a recognised RVSP option
+                    for reaction in sMessage.reactions:
+                        for emoji in snEvents.manager.m_config.m_reactions.keys():
+                            if reaction.emoji == emoji:
+                                users = await reaction.users().flatten()
+                                # RVSP the users that have selected that option
+                                for user in users:
+                                    if user != bot.user:
+                                        if event.signups != None:
+                                            userSignup = None
+                                            try:
+                                                userSignup = event.signups[user.id]
+                                            except KeyError:
+                                                pass
+                                            reactionEmoji = snEvents.config.m_reactions[reaction.emoji]
+                                            if userSignup != reactionEmoji:
+                                                reactionStr = f"<@{user.id}> reacted to {event.name} with {reaction.emoji}"
+                                                reactionsLogBuffer = f"{reactionsLogBuffer}{reactionStr}\n"
+                                                event.signups[user.id] = snEvents.config.m_reactions[reaction.emoji]
+                except Exception as e:
+                    await snBot_Output.send_debug_message_async(f"```Exception : \n check_reactions_async() - Event Loop - {e}```")
     except Exception as e:
-        await snBot_Output.send_debug_message_async(f"check_reactions_async() - {e}")
+        await snBot_Output.send_debug_message_async(f"```Exception : \n check_reactions_async() - {e}```")
     if reactionsLogBuffer != "":
         await snBot_Output.post_log_message_async(reactionsLogBuffer)
 

@@ -78,7 +78,7 @@ class Config():
         hChannel = snXMLHelpers.get_value_int(configNode, 'heartbeat')
         if hChannel != None:
             self.m_heartbeatChannel = hChannel
-        self.m_isAscendingSort = snXMLHelpers.get_value_bool(configNode, 'sortorder')
+        self.m_isAscendingSort = snXMLHelpers.get_value_bool(configNode, 'ascendingsort')
         self.m_utcOffset = snXMLHelpers.get_value_float(configNode, 'utcoffset')
         wMessage = snXMLHelpers.get_value_text(configNode, 'welcomemessage')
         if wMessage != None:

@@ -118,7 +118,6 @@ def initialise(bot):
                             await snBot_Helpers.context_send_codeblock_async(ctx, f"Reaction {reaction} removed for User <@!{userID}>")
                             await snBot.refresh_async()
             else:
-                print("Main Command")
                 await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
                 await snBot.refresh_async()
         else:

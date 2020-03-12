@@ -3,7 +3,7 @@ print("snBot.py")
 import threading
 # Discord
 import discord
-from discord.ext import commands as commands
+from discord.ext import commands
 # Input
 import input
 # Supernova Commands
@@ -106,9 +106,10 @@ async def check_events_async():
     if results[3] != None:
         sChannel = snBot_Helpers.get_signup_channel()
         for result in results [3]:
-            sMessage = await snBot_Helpers.fetch_message_async(sChannel, result.signupMessageID)
-            await sMessage.clear_reactions()
-            await snBot_Output.send_debug_message_async(f"Event {result.id} has been locked.")
+            if result.signupMessageID != None:
+                sMessage = await snBot_Helpers.fetch_message_async(sChannel, result.signupMessageID)
+                await sMessage.clear_reactions()
+                await snBot_Output.send_debug_message_async(f"Event {result.id} has been locked.")
 
 # TODO : Clean up this function, it's ugly AF
 async def check_reactions_async():

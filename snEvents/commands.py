@@ -447,13 +447,14 @@ class Command_Config(commands.Command):
             reactionsContent = f"{reactionsContent}{value} - {key}\n"
         reactionsData = [reactionsHeading, reactionsContent]
         # Thumbnails
-        thumbnailsHeading = "Thumbnails"
-        thumbnailsContent = ""
-        for thumbnail in manager.m_config.m_thumbnails:
-            index = manager.m_config.m_thumbnails.index(thumbnail)
-            abbrDay = pyCalendar.day_abbr[index]
-            thumbnailsContent = f"{thumbnailsContent}{abbrDay} - {thumbnail}\n"
-        thumbnailsData = [thumbnailsHeading, thumbnailsContent]
+        if False: # DISABLED - Never really used and takes up a lot of space.
+            thumbnailsHeading = "Thumbnails"
+            thumbnailsContent = ""
+            for thumbnail in manager.m_config.m_thumbnails:
+                index = manager.m_config.m_thumbnails.index(thumbnail)
+                abbrDay = pyCalendar.day_abbr[index]
+                thumbnailsContent = f"{thumbnailsContent}{abbrDay} - {thumbnail}\n"
+            thumbnailsData = [thumbnailsHeading, thumbnailsContent]
         # Welcome Message
         welcomeMessageHeading = "Welcome Message"
         welcomeMessageContent = manager.m_config.m_welcomeMessage

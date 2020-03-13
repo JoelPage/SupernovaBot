@@ -113,7 +113,6 @@ class Command_Create(commands.Command):
             reminderDelta = timedelta(hours=reminder.hours)
             reminderTime = newEvent.start - reminderDelta
             if reminderTime < now:
-                print(f"Adding Reminded for {reminder.hours}")
                 newEvent.reminded.append(reminder.hours)
 
         signups = {}
@@ -250,7 +249,7 @@ class Command_Config_Reminder(commands.Command):
 
     def executeInternal(self, args):
         if args.addremove == "add":
-            manager.m_config.m_reminders.append(Reminder(args.hours, args.message))
+            manager.m_config.m_reminders.append(Reminder(abs(args.hours), args.message))
             manager.publish()
             return [ [ "Reminders", f"Reminder Added {args.hours} hours before events begin." ] ]
         else:
@@ -447,14 +446,14 @@ class Command_Config(commands.Command):
             reactionsContent = f"{reactionsContent}{value} - {key}\n"
         reactionsData = [reactionsHeading, reactionsContent]
         # Thumbnails
-        if False: # DISABLED - Never really used and takes up a lot of space.
-            thumbnailsHeading = "Thumbnails"
-            thumbnailsContent = ""
-            for thumbnail in manager.m_config.m_thumbnails:
-                index = manager.m_config.m_thumbnails.index(thumbnail)
-                abbrDay = pyCalendar.day_abbr[index]
-                thumbnailsContent = f"{thumbnailsContent}{abbrDay} - {thumbnail}\n"
-            thumbnailsData = [thumbnailsHeading, thumbnailsContent]
+        # DISABLED - Never really used and takes up a lot of space.
+        #thumbnailsHeading = "Thumbnails"
+        #thumbnailsContent = ""
+        #for thumbnail in manager.m_config.m_thumbnails:
+            #index = manager.m_config.m_thumbnails.index(thumbnail)
+            #abbrDay = pyCalendar.day_abbr[index]
+            #thumbnailsContent = f"{thumbnailsContent}{abbrDay} - {thumbnail}\n"
+        #thumbnailsData = [thumbnailsHeading, thumbnailsContent]
         # Welcome Message
         welcomeMessageHeading = "Welcome Message"
         welcomeMessageContent = manager.m_config.m_welcomeMessage
@@ -467,7 +466,7 @@ class Command_Config(commands.Command):
             timeData,
             signupLimitData,
             reactionsData,
-            thumbnailsData,
+            #thumbnailsData,
             welcomeMessageData
             ]
 

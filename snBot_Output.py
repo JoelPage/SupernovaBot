@@ -45,7 +45,7 @@ async def post_log_message_async(message):
 async def post_log_embed_async(embed):
     try:
         channel = snBot_Helpers.get_log_channel()
-        await channel.send(embed)
+        await channel.send(embed=embed)
     except Exception:
         print("post_log_embed_async() Exception")
         pass

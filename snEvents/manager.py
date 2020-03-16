@@ -15,9 +15,7 @@ helpers = snEventHelpers
 datetime = pyDateTime.datetime
 timedelta = pyDateTime.timedelta
 # Class Aliases
-print("Attempting to set Event Alias")
 Event = snEvent.Event
-print(f"Event alias set to {Event}")
 Reminder = snReminder.Reminder
 # Could we use a Dictionary ?
 # Maybe if looping gets slow
@@ -29,15 +27,11 @@ m_onEventCreatedAsync = helpers.delegate1
 m_removedEvents = []
 
 def initialise():
-    helpers.debug_print("initialise()")
-
     global m_config
     m_config = snConfig.m_config
-
     deserialise()
 
 def deserialise():
-    helpers.debug_print("deserialise()")
     try:
         eventsTree = xml_helpers.fileRead(m_xmlFilePath)
         create_config_from_tree(eventsTree.getroot())
@@ -47,7 +41,6 @@ def deserialise():
         publish()
 
 def create_config_from_tree(root):
-    helpers.debug_print(f"create_config_from_tree({root})")
     m_config.deserialise(root)
 
 def create_events_from_tree(root):
@@ -61,20 +54,16 @@ def create_events_from_tree(root):
     sort_events()
 
 def sort_events():
-    helpers.debug_print("sort_events()")
     m_events.sort(key=event_sort_by)
 
 def event_sort_by(event):
-    helpers.debug_print(f"event_sort_by({event})")
     return event.start.timestamp()
 
 def publish():
-    helpers.debug_print("publish()")
     sort_events()
     serialise()
 
 def serialise():
-    helpers.debug_print("serialise()")
     treeRoot = create_tree()
     write_tree_to_file(treeRoot)
 
@@ -97,7 +86,6 @@ def add_events_to_tree(root):
         event.serialise(root)
 
 def add_event_to_tree(root, event):
-    helpers.debug_print(f"addEventsToTree({root},{event})")
     eventsNode = root.find('events')
     eventNode = tree.SubElement(eventsNode, 'event')
     nameNode = tree.SubElement(eventNode, 'name')
@@ -144,14 +132,12 @@ def find_event_by_id(id):
     return None
 
 def remove_event(event):
-    helpers.debug_print(f"remove_event({event})")
     m_removedEvents.append(event)
     m_events.remove(event)
     publish()
     return f"Event {event.name} removed!"
 
 def remove_event_by_id(id):
-    helpers.debug_print(f"remove_event_by_id({id})")
     event = find_event_by_id(id)
     if event == None:
         return f"No event found with id:{id}"

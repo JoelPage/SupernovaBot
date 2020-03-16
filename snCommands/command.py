@@ -1,6 +1,8 @@
 print("snCommands/command.py")
 # Python
-import argparse
+import argparse 
+# Supernova Arg Parser
+import snArgParse.parser as snArgParser
 # Supernova Commands
 import snCommands.manager as manager
 
@@ -28,6 +30,8 @@ class Command():
             return Result(value=value)
         except Exception as e:
             print("Command exception raised")
+            for error in e.args:
+                print(f"error: {error}")
             return Result(error=e.args[0])
 
     def executeInternal(self, args):
@@ -35,7 +39,7 @@ class Command():
 
     def parseArgs(self, args):
         try:
-            parser = argparse.ArgumentParser(f"{self.name}")
+            parser = snArgParser.ArgumentParser(f"{self.name}")
             for arg in self.requiredArgs:
                 parser.add_argument(arg.name, type=arg.type, help=arg.help, choices=arg.choices)
             for arg in self.optionalArgs:
@@ -53,6 +57,8 @@ class Command():
             raise Exception(f"{ae.args}, Review the Usage: {parser.format_usage()}")
         except SystemExit as ex:
             print("SystemExit raised")
+            for error in ex.args:
+                print(f"error: {error}")
             if ex.args[0] == 0:
                 raise Exception(f"You requested some help! Here you go:\n{parser.format_help()}")
             else:

@@ -121,9 +121,6 @@ def initialise(bot):
             else:
                 await ctx.send(f"{result.value[0]}\n```xl\n{result.value[1]}```")
                 await snBot.refresh_async()
-        else:
-            print("Error")
-            await snBot_Output.send_debug_message_async(f"{result.error}")
 
     @bot.command()
     @commands.check(check_valid_users)

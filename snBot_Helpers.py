@@ -30,7 +30,6 @@ def get_heartbeat_channel():
 def get_channel(id):
     channel = snBot.bot.get_channel(id)
     if channel == None:
-        print(f"get_channel({id}) == None")
         raise Exception(f"Channel with id {id} not found.")
     return channel
 
@@ -42,6 +41,8 @@ async def fetch_message_async(channel, id):
 
 async def is_result_valid_async(ctx, result):
     if result.error != None:
+        print("Result is invalid")
+        print(f"{result.error}")
         await context_send_codeblock_async(ctx, result.error)
         return False
     else:

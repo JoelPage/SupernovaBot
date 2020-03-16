@@ -60,7 +60,7 @@ class Command_Create(commands.Command):
         super().__init__("CREATE")
 
     requiredArgs = [ 
-        Argument("name", help="Set the name of the event. Format : 'Name in quotes'"),
+        Argument("title", help="Set the title of the event. Format : 'Title in quotes'"),
         Argument("start", type=parse_types.parse_time, help="Set the start time. Format : HH:MM or H:MMam")
     ]
 
@@ -105,7 +105,7 @@ class Command_Create(commands.Command):
         
         image = args.image
 
-        newEvent = Event(args.name, start, end=end, 
+        newEvent = Event(args.title, start, end=end, 
         description=args.description, image=image, thumbnail=thumbnail)
         
         # If event is started past a reminder time, set as reminded
@@ -173,7 +173,7 @@ class Command_Edit(commands.Command):
     ]
 
     optionalArgs = [
-        Argument("name", help="Set the name of the event. Format : 'Name in quotes'"),
+        Argument("title", help="Set the title of the event. Format : 'Title in quotes'"),
         Argument("start", type=parse_types.parse_time, help="Set the start time. Format : HH:MM or H:MMam"),
         Argument("end", type=parse_types.parse_time, help="Set the end time. Format : HH:MM or H:MMpm"),
         Argument("start-date", type=parse_types.parse_date, help="Set the start date. Format : DD/MM or DD/MM/YYYY"),
@@ -196,7 +196,7 @@ class Command_Edit(commands.Command):
         foundEvent.isDirty = True
         # String Updates
         if args.name != None:
-            foundEvent.name = args.name
+            foundEvent.name = args.title
         if args.description != None:
             foundEvent.description = args.description
         if args.image != None:

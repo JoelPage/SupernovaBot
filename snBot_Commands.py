@@ -39,7 +39,7 @@ def initialise(bot):
     @commands.check(check_valid_users)
     async def info(ctx, *args):
         title = "Info"
-        desc = "Supernova Bot v0.1.4\n"
+        desc = "Supernova Bot v0.1.5 WIP\n"
         embed = discord.Embed(title=title, description=desc)
         await ctx.send(embed=embed)
 
@@ -82,7 +82,6 @@ def initialise(bot):
                 pass
 
             if isSubCommand:
-                print("SubCommand")
                 # Validate Event
                 event = snEvents.manager.find_event_by_id(result.value.UID)
                 if event == None:
